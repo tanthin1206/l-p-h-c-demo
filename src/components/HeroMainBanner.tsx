@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Maximize2, X, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { getAssetUrl } from '../utils/assets';
 
 interface HeroMainBannerProps {
   customBannerUrl?: string;
@@ -28,44 +29,56 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
   useEffect(() => {
     try {
       const saved = localStorage.getItem("offlineBannerData");
-      setCurrentBanner(customBannerUrl?.trim() || saved?.trim() || DEFAULT_BANNER);
-    } catch {
-      setCurrentBanner(customBannerUrl?.trim() || DEFAULT_BANNER);
-    }
+      if (customBannerUrl && customBannerUrl.trim()) {
+        setCurrentBanner(customBannerUrl.trim());
+      } else if (saved && saved.trim()) {
+        setCurrentBanner(saved.trim());
+      }
+    } catch {}
   }, [customBannerUrl]);
 
-  // Escape key listener
+  // Handle ESC key for lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isLightboxOpen) setIsLightboxOpen(false);
-        if (isEditModalOpen) setIsEditModalOpen(false);
+        setIsLightboxOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
+    if (isLightboxOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLightboxOpen, isEditModalOpen]);
+  }, [isLightboxOpen]);
 
+  // Handle custom file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check size limit ~5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Vui lòng chọn ảnh nhỏ hơn 5MB để lưu trữ mượt mà!");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setCurrentBanner(result);
-      try {
-        localStorage.setItem("offlineBannerData", result);
-      } catch (err) {
-        console.warn("Storage quota exceeded", err);
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setCurrentBanner(base64);
+        try {
+          localStorage.setItem("offlineBannerData", base64);
+        } catch (err) {
+          console.warn("Storage quota exceeded, banner kept in memory", err);
+        }
+        onBannerChange?.(base64);
+        setIsEditModalOpen(false);
       }
-      onBannerChange?.(result);
-      setIsEditModalOpen(false);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleApplyUrl = () => {
+  const handleSaveUrl = () => {
     if (!inputUrl.trim()) return;
     setCurrentBanner(inputUrl.trim());
     try {
@@ -97,13 +110,13 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
           title="Nhấn để xem ảnh Banner toàn màn hình"
         >
           <img
-            src={currentBanner}
+            src={getAssetUrl(currentBanner)}
             alt="Hero Banner Hành Trình Trạng Nguyên"
             className="w-full h-auto max-h-[480px] md:max-h-[560px] object-contain block transition-transform duration-300 group-hover:scale-[1.005]"
             loading="eager"
             onError={(e) => {
               // Fallback if custom image fails
-              (e.target as HTMLImageElement).src = DEFAULT_BANNER;
+              (e.target as HTMLImageElement).src = getAssetUrl(DEFAULT_BANNER);
             }}
           />
 
@@ -156,9 +169,9 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={currentBanner}
+              src={getAssetUrl(currentBanner)}
               alt="Banner Fullscreen"
-              className="w-full h-auto max-h-[85vh] object-contain rounded-xl sm:rounded-2xl shadow-2xl border-2 border-amber-400/80"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl border-2 border-amber-400/80"
             />
             <div className="mt-3 flex items-center gap-3 text-amber-200 text-xs sm:text-sm font-semibold">
               <span>🖼️ Banner Trang Chủ Trạng Nguyên</span>
@@ -229,7 +242,7 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
                     className="flex-1 px-3 py-2 text-xs border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   <button
-                    onClick={handleApplyUrl}
+                    onClick={handleSaveUrl}
                     className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-xl shadow cursor-pointer"
                   >
                     Áp dụng

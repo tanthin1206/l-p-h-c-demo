@@ -13,6 +13,7 @@ import {
   ZoomIn
 } from 'lucide-react';
 import { soundEngine } from '../../utils/soundEngine';
+import { getAssetUrl } from '../../utils/assets';
 
 export interface GameBannerConfig {
   bannerUrl?: string;
@@ -123,7 +124,7 @@ export const GameBannerEditorModal: React.FC<GameBannerEditorModalProps> = ({
     onClose();
   };
 
-  const effectiveBanner = bannerUrl || '/banner-tro-choi.png';
+  const effectiveBanner = bannerUrl || getAssetUrl('/banner-tro-choi.png');
   const backgroundPosition = position === 'left' ? 'left center' : position === 'right' ? 'right center' : 'center center';
 
   return (
@@ -191,7 +192,7 @@ export const GameBannerEditorModal: React.FC<GameBannerEditorModalProps> = ({
               <div
                 className="absolute inset-0 transition-all duration-200"
                 style={{
-                  backgroundImage: `url(${effectiveBanner})`,
+                  backgroundImage: `url(${getAssetUrl(effectiveBanner)})`,
                   backgroundPosition,
                   backgroundSize: fit === 'cover' ? `${zoom}%` : 'contain',
                   backgroundRepeat: 'no-repeat',

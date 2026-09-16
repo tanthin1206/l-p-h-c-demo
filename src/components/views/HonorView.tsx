@@ -15,6 +15,7 @@ import confetti from 'canvas-confetti';
 import { Student, ClassConfig } from '../../types';
 import { getRankByPoints, AVATAR_OPTIONS, RANK_TIERS } from '../../utils/ranks';
 import { soundEngine } from '../../utils/soundEngine';
+import { getAssetUrl } from '../../utils/assets';
 
 interface HonorViewProps {
   students: Student[];
@@ -46,7 +47,7 @@ export const HonorView: React.FC<HonorViewProps> = ({ students, config }) => {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-950 via-amber-900 to-red-950 p-6 sm:p-10 text-center text-amber-50 shadow-2xl border-3 md:border-4 border-amber-400">
         <div className="absolute inset-0 opacity-40 mix-blend-luminosity">
           <img
-            src="/banner-tam-khoi.png"
+            src={getAssetUrl("/banner-tam-khoi.png")}
             alt="Bảng Vàng Tam Khôi"
             className="w-full h-full object-cover object-center transform scale-105"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -85,7 +86,7 @@ export const HonorView: React.FC<HonorViewProps> = ({ students, config }) => {
       {students.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border-2 border-dashed border-amber-300 text-center max-w-2xl mx-auto my-6">
           <img 
-            src="/assets/images/empty-classroom.jpg" 
+            src={getAssetUrl("/assets/images/empty-classroom.jpg")} 
             alt="Lớp học trống" 
             className="w-64 h-48 sm:w-80 sm:h-56 object-cover rounded-2xl shadow-md border-4 border-amber-300 mx-auto mb-6"
           />
@@ -108,7 +109,7 @@ export const HonorView: React.FC<HonorViewProps> = ({ students, config }) => {
           {/* Mascot in corner */}
           <div className="hidden sm:flex absolute -top-5 right-6 items-center gap-2 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-2xl shadow-sm z-10">
             <img 
-              src="/assets/images/trang-ti.jpg" 
+              src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí" 
               className="w-10 h-10 rounded-xl object-cover border border-amber-400"
             />

@@ -13,6 +13,7 @@ import { Student, AttendanceDay, AttendanceStatus } from '../../types';
 import { soundEngine } from '../../utils/soundEngine';
 import { storage } from '../../utils/storage';
 import { AVATAR_OPTIONS } from '../../utils/ranks';
+import { getAssetUrl } from '../../utils/assets';
 
 interface AttendanceViewProps {
   students: Student[];
@@ -133,7 +134,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
       {students.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border-2 border-dashed border-amber-300 text-center max-w-2xl mx-auto my-6">
           <img 
-            src="/assets/images/empty-classroom.jpg" 
+            src={getAssetUrl("/assets/images/empty-classroom.jpg")} 
             alt="Lớp học trống" 
             className="w-64 h-48 sm:w-80 sm:h-56 object-cover rounded-2xl shadow-md border-4 border-amber-300 mx-auto mb-6"
           />

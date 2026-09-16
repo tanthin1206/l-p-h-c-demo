@@ -20,6 +20,7 @@ import { ClassConfig, Criterion, Student, Group } from '../../types';
 import { storage, DEFAULT_CONFIG, DEFAULT_CRITERIA } from '../../utils/storage';
 import { soundEngine } from '../../utils/soundEngine';
 import { AI_SERVICE } from '../../utils/gemini';
+import { getAssetUrl } from '../../utils/assets';
 
 interface SettingsViewProps {
   config: ClassConfig;
@@ -303,7 +304,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
                 <img
-                  src={formData.homeBanner || "/banner-trang-nguyen.png"}
+                  src={getAssetUrl(formData.homeBanner || "/banner-trang-nguyen.png")}
                   alt="Home Banner"
                   className="w-full h-full object-cover"
                 />
@@ -343,7 +344,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
                 <img
-                  src="/banner-tam-khoi.png"
+                  src={getAssetUrl("/banner-tam-khoi.png")}
                   alt="Tam Khoi Banner"
                   className="w-full h-full object-cover"
                 />
@@ -363,7 +364,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
                 <img
-                  src="/banner-tro-choi.png"
+                  src={getAssetUrl("/banner-tro-choi.png")}
                   alt="Game Banner"
                   className="w-full h-full object-cover"
                 />

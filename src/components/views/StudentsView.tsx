@@ -28,6 +28,7 @@ import { storage } from '../../utils/storage';
 import { HeroMainBanner } from '../HeroMainBanner';
 import { TopScholarsStrip } from '../TopScholarsStrip';
 import { ClassTeacherInfoCard } from '../ClassTeacherInfoCard';
+import { getAssetUrl } from '../../utils/assets';
 
 interface StudentsViewProps {
   students: Student[];
@@ -393,13 +394,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
             <div className="relative group">
               <img 
-                src="/assets/images/empty-classroom.jpg" 
+                src={getAssetUrl("/assets/images/empty-classroom.jpg")} 
                 alt="Lớp học Trạng Nguyên" 
                 className="w-64 h-48 sm:w-80 sm:h-56 object-cover rounded-2xl shadow-md border-4 border-amber-300 transition-transform group-hover:scale-105 duration-300"
               />
               <div className="absolute -bottom-3 -right-3 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg bg-amber-100">
                 <img 
-                  src="/assets/images/trang-ti.jpg" 
+                  src={getAssetUrl("/assets/images/trang-ti.jpg")} 
                   alt="Trạng Tí" 
                   className="w-full h-full object-cover"
                 />

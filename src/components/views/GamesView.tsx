@@ -22,6 +22,7 @@ import { storage } from '../../utils/storage';
 import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { AI_SERVICE } from '../../utils/gemini';
 import { GameBannerEditorModal, GameBannerConfig } from '../modals/GameBannerEditorModal';
+import { getAssetUrl } from '../../utils/assets';
 
 interface GamesViewProps {
   students: Student[];
@@ -348,7 +349,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
           id="banner-layer-1-bg"
           className="absolute inset-0 transition-transform duration-500 ease-out"
           style={{
-            backgroundImage: `url('${bannerConfig.bannerUrl || '/banner-tro-choi.png'}')`,
+            backgroundImage: `url('${getAssetUrl(bannerConfig.bannerUrl || '/banner-tro-choi.png')}')`,
             backgroundPosition: bannerConfig.position === 'left' ? 'left center' : bannerConfig.position === 'right' ? 'right center' : 'center center',
             backgroundSize: bannerConfig.fit === 'cover' ? `${bannerConfig.zoom}%` : 'contain',
             backgroundRepeat: "no-repeat",
@@ -498,7 +499,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
         <div className="bg-amber-50 rounded-3xl p-5 border-2 border-dashed border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
             <img 
-              src="/assets/images/trang-ti.jpg" 
+              src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí" 
               className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-sm shrink-0"
             />
@@ -597,7 +598,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
           <div className="flex flex-col items-center">
             <div className="relative mb-2">
               <img 
-                src="/assets/images/trang-ti.jpg" 
+                src={getAssetUrl("/assets/images/trang-ti.jpg")} 
                 alt="Trạng Tí Ban Chiếu" 
                 className="w-20 h-20 rounded-full object-cover border-4 border-amber-400 shadow-md"
               />
@@ -674,7 +675,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-amber-200 max-w-2xl mx-auto space-y-6">
           <div className="flex flex-col items-center text-center">
             <img 
-              src="/assets/images/trang-ti.jpg" 
+              src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí Đố Bạn" 
               className="w-20 h-20 rounded-full object-cover border-4 border-amber-400 shadow-md mb-2"
             />

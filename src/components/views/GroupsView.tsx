@@ -16,6 +16,7 @@ import { Group, Student, Criterion, PointLog } from '../../types';
 import { soundEngine } from '../../utils/soundEngine';
 import { storage } from '../../utils/storage';
 import { AVATAR_OPTIONS, getRankByPoints } from '../../utils/ranks';
+import { getAssetUrl } from '../../utils/assets';
 
 interface GroupsViewProps {
   groups: Group[];
@@ -86,11 +87,11 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
   };
 
   const getGroupMascotImage = (id: string, name: string) => {
-    if (id === 'group-1' || name.includes('Rồng')) return '/assets/images/to-1-rong-vang.jpg';
-    if (id === 'group-2' || name.includes('Hổ')) return '/assets/images/to-2-ho-dung-manh.jpg';
-    if (id === 'group-3' || name.includes('Lạc')) return '/assets/images/to-3-chim-lac.jpg';
-    if (id === 'group-4' || name.includes('Cá Chép')) return '/assets/images/to-4-ca-chep.jpg';
-    return '/assets/images/trang-ti.jpg';
+    if (id === 'group-1' || name.includes('Rồng')) return getAssetUrl('/assets/images/to-1-rong-vang.jpg');
+    if (id === 'group-2' || name.includes('Hổ')) return getAssetUrl('/assets/images/to-2-ho-dung-manh.jpg');
+    if (id === 'group-3' || name.includes('Lạc')) return getAssetUrl('/assets/images/to-3-chim-lac.jpg');
+    if (id === 'group-4' || name.includes('Cá Chép')) return getAssetUrl('/assets/images/to-4-ca-chep.jpg');
+    return getAssetUrl('/assets/images/trang-ti.jpg');
   };
 
   return (
@@ -116,7 +117,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
         <div className="bg-amber-50 rounded-3xl p-6 border-2 border-dashed border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img 
-              src="/assets/images/trang-ti.jpg" 
+              src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí" 
               className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
             />
