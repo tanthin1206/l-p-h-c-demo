@@ -320,6 +320,7 @@ export const App: React.FC = () => {
           {activeTab === 'groups' && (
             <GroupsView
               groups={groups}
+              setGroups={setGroups}
               students={students}
               setStudents={setStudents}
               criteria={criteria}
