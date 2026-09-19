@@ -148,7 +148,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   };
 
   return (
-    <div className="space-y-5 font-sans">
+    <div className="space-y-3 font-sans">
       {/* 1. CLASS & TEACHER INFO CARD (with 4 stat pills & edit mode toggle) */}
       <ClassTeacherInfoCard
         config={config}
