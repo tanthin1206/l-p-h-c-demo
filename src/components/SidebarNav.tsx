@@ -68,18 +68,18 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       <aside
         id="app-sidebar-nav"
         className={`
-          fixed top-0 bottom-0 left-0 z-50 lg:sticky lg:top-0 lg:h-screen
-          w-[250px] min-w-[250px] max-w-[250px]
+          fixed top-0 bottom-0 left-0 z-40 lg:z-30
+          w-[250px] min-w-[250px] max-w-[250px] h-screen
           bg-[#5B0E0E] text-white
           border-r-2 border-amber-500/30 shadow-2xl
           flex flex-col justify-between
-          transition-transform duration-300 ease-in-out
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          transition-transform duration-300 ease-in-out select-none
+          ${isMobileOpen ? "translate-x-0 !z-50" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        {/* Top Header Logo */}
-        <div>
-          <div className="p-4 border-b border-amber-500/20 bg-black/15">
+        {/* Top Header Logo & Nav Items */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="p-4 border-b border-amber-500/20 bg-black/15 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-amber-950 flex items-center justify-center shadow-lg border border-amber-200 shrink-0 transform hover:scale-105 transition-transform">
@@ -108,7 +108,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           </div>
 
           {/* Nav Items */}
-          <nav className="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-140px)] scrollbar-none font-sans">
+          <nav className="p-3 space-y-1.5 overflow-y-auto flex-1 scrollbar-thin font-sans">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -140,7 +140,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         </div>
 
         {/* Bottom Sidebar Footer */}
-        <div className="p-3 border-t border-amber-500/20 bg-black/20 text-center text-xs text-amber-200/70 font-serif">
+        <div className="p-3 border-t border-amber-500/20 bg-black/20 text-center text-xs text-amber-200/70 font-serif shrink-0">
           <div className="font-bold text-amber-200">{config.className}</div>
           <div className="text-[11px] truncate">{config.schoolName}</div>
         </div>

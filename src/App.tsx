@@ -226,14 +226,14 @@ export const App: React.FC = () => {
   const pendingAssignmentsCount = assignments.filter(a => a.completedStudentIds.length < students.length).length;
 
   return (
-    <div className="min-h-screen text-[#2D241E] flex flex-row font-sans relative overflow-x-hidden bg-[#FFFCF5]">
+    <div className="min-h-screen text-[#2D241E] flex flex-col font-sans relative bg-[#FFFCF5]">
       {/* Courtyard Heritage Background Layer */}
       <div id="courtyard-heritage-background" className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none" aria-hidden="true">
         <div className="absolute inset-0 bg-gradient-to-b from-[#6EBDF3] via-[#A7DCF8] via-30% via-[#FDF6E9] via-65% to-[#F4E8D6]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-amber-200/35 via-yellow-100/20 to-transparent rounded-full blur-3xl opacity-75" />
       </div>
 
-      {/* 1. SIDEBAR NAVIGATION (250px, #5B0E0E) */}
+      {/* 1. SIDEBAR NAVIGATION (250px, #5B0E0E - FIXED) */}
       <SidebarNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -244,8 +244,8 @@ export const App: React.FC = () => {
         onCloseMobile={() => setIsMobileNavOpen(false)}
       />
 
-      {/* 2. MAIN CONTENT WRAPPER */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen relative z-10 bg-[#FFFCF5]/95 backdrop-blur-3xs">
+      {/* 2. MAIN CONTENT WRAPPER (Offset by 250px on desktop) */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen lg:pl-[250px] relative z-10 bg-[#FFFCF5]/90">
         {/* Sticky Header */}
         <Header
           config={config}
