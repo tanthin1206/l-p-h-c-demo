@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Settings, 
   Crown,
-  X
+  X,
+  PanelLeftClose
 } from 'lucide-react';
 import { ActiveTab, ClassConfig } from '../types';
 
@@ -21,6 +22,8 @@ interface SidebarNavProps {
   config: ClassConfig;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({
@@ -31,6 +34,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   config,
   isMobileOpen = false,
   onCloseMobile,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
   const navItems: {
     id: ActiveTab;
@@ -74,14 +79,14 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           border-r-2 border-amber-500/30 shadow-2xl
           flex flex-col justify-between
           transition-transform duration-300 ease-in-out select-none
-          ${isMobileOpen ? "translate-x-0 !z-50" : "-translate-x-full lg:translate-x-0"}
+          ${isMobileOpen ? "translate-x-0 !z-50" : isCollapsed ? "-translate-x-full" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* Top Header Logo & Nav Items */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="p-4 border-b border-amber-500/20 bg-black/15 shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-amber-950 flex items-center justify-center shadow-lg border border-amber-200 shrink-0 transform hover:scale-105 transition-transform">
                   <Crown className="w-6 h-6 text-amber-950 fill-yellow-300" />
                 </div>
@@ -95,15 +100,31 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </div>
               </div>
 
-              {onCloseMobile && (
-                <button
-                  type="button"
-                  onClick={onCloseMobile}
-                  className="lg:hidden p-1.5 rounded-lg text-amber-200 hover:bg-white/10"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Desktop Collapse Button */}
+                {onToggleCollapse && (
+                  <button
+                    type="button"
+                    onClick={onToggleCollapse}
+                    className="hidden lg:flex p-1.5 rounded-lg text-amber-200/80 hover:text-amber-100 hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Thu gọn menu (Ẩn thanh bên)"
+                  >
+                    <PanelLeftClose className="w-5 h-5" />
+                  </button>
+                )}
+
+                {/* Mobile Close Button */}
+                {onCloseMobile && (
+                  <button
+                    type="button"
+                    onClick={onCloseMobile}
+                    className="lg:hidden p-1.5 rounded-lg text-amber-200 hover:bg-white/10 cursor-pointer"
+                    title="Đóng menu"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

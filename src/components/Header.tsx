@@ -7,7 +7,9 @@ import {
   Sparkles, 
   Trophy, 
   Dice5,
-  GraduationCap
+  GraduationCap,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { ClassConfig, Student } from '../types';
 import { soundEngine } from '../utils/soundEngine';
@@ -23,6 +25,8 @@ interface HeaderProps {
   onWeeklySummary: () => void;
   onCallStudent: () => void;
   onOpenScoreModal: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,21 +39,53 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileMenu,
   onWeeklySummary,
   onCallStudent,
-  onOpenScoreModal
+  onOpenScoreModal,
+  isSidebarCollapsed = false,
+  onToggleSidebar
 }) => {
   return (
     <header id="app-main-header" className="bg-[#5B0E0E] text-white shadow-md border-b-2 border-amber-400/80 sticky top-0 z-30 font-sans">
       <div className="w-full px-3.5 sm:px-6 py-2.5">
         <div className="flex items-center justify-between gap-3">
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            onClick={onToggleMobileMenu}
-            className="lg:hidden p-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 transition-colors cursor-pointer"
-            title="Mở menu danh mục"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {/* Left Menu Toggle Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              className="lg:hidden p-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 transition-colors cursor-pointer flex items-center justify-center"
+              title="Mở menu danh mục"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Desktop toggle sidebar button */}
+            {onToggleSidebar && (
+              <button
+                type="button"
+                id="btn-toggle-desktop-sidebar"
+                onClick={onToggleSidebar}
+                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold font-sans text-xs transition-all cursor-pointer shadow-xs active:scale-95 ${
+                  isSidebarCollapsed
+                    ? "bg-amber-400 text-amber-950 hover:bg-yellow-300 border border-yellow-300 shadow-md font-extrabold"
+                    : "border border-amber-400/40 text-amber-200 bg-amber-500/20 hover:bg-amber-500/35"
+                }`}
+                title={isSidebarCollapsed ? "Mở rộng thanh menu bên cạnh" : "Ẩn thanh menu bên cạnh"}
+              >
+                {isSidebarCollapsed ? (
+                  <>
+                    <PanelLeftOpen className="w-4 h-4 text-amber-950" />
+                    <span>Hiện Menu</span>
+                  </>
+                ) : (
+                  <>
+                    <PanelLeftClose className="w-4 h-4 text-amber-200" />
+                    <span>Ẩn Menu</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end ml-auto">

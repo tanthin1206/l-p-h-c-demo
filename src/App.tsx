@@ -42,6 +42,17 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('students');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('tndv_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('tndv_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   // Core App States
   const [students, setStudents] = useState<Student[]>(() => storage.getStudents());
@@ -242,10 +253,14 @@ export const App: React.FC = () => {
         config={config}
         isMobileOpen={isMobileNavOpen}
         onCloseMobile={() => setIsMobileNavOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
       />
 
-      {/* 2. MAIN CONTENT WRAPPER (Offset by 250px on desktop) */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen lg:pl-[250px] relative z-10 bg-[#FFFCF5]/90">
+      {/* 2. MAIN CONTENT WRAPPER (Offset dynamically by 250px or 0px on desktop) */}
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen relative z-10 bg-[#FFFCF5]/90 transition-[padding] duration-300 ease-in-out ${
+        isSidebarCollapsed ? 'lg:pl-0' : 'lg:pl-[250px]'
+      }`}>
         {/* Sticky Header */}
         <Header
           config={config}
@@ -255,6 +270,8 @@ export const App: React.FC = () => {
           onToggleFullscreen={handleToggleFullscreen}
           isFullscreen={isFullscreen}
           onToggleMobileMenu={() => setIsMobileNavOpen(prev => !prev)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={handleToggleSidebar}
           onWeeklySummary={() => setWeeklySummaryOpen(true)}
           onCallStudent={() => {
             setRandomCallerOpen(true);
