@@ -149,16 +149,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
   return (
     <div className="space-y-5 font-sans">
-      {/* 1. HERO MAIN BANNER (2K Original Style with Lightbox) */}
-      <HeroMainBanner
-        customBannerUrl={config.homeBanner}
-        onBannerChange={(newUrl) => {
-          const updated = { ...config, homeBanner: newUrl };
-          storage.saveConfig(updated);
-        }}
-      />
-
-      {/* 2. CLASS & TEACHER INFO CARD (with 4 stat pills & edit mode toggle) */}
+      {/* 1. CLASS & TEACHER INFO CARD (with 4 stat pills & edit mode toggle) */}
       <ClassTeacherInfoCard
         config={config}
         students={students}
@@ -166,6 +157,15 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         customTeacherAvatar={config.teacherAvatar}
         isEditMode={isEditMode}
         onToggleEditMode={() => setIsEditMode(!isEditMode)}
+      />
+
+      {/* 2. HERO MAIN BANNER (2K Original Style with Lightbox) */}
+      <HeroMainBanner
+        customBannerUrl={config.homeBanner}
+        onBannerChange={(newUrl) => {
+          const updated = { ...config, homeBanner: newUrl };
+          storage.saveConfig(updated);
+        }}
       />
 
       {/* 3. TOP SCHOLARS STRIP (Top 3 Bảng Vàng Danh Dự) */}
