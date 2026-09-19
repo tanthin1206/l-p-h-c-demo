@@ -38,7 +38,7 @@ interface StudentsViewProps {
   pointLogs: PointLog[];
   config: ClassConfig;
   onOpenScoreModalForSingle: (student: Student, category: 'positive' | 'reminder') => void;
-  onOpenScoreModalForSelected: (students: Student[]) => void;
+  onOpenScoreModalForSelected: (students: Student[], category?: 'positive' | 'reminder') => void;
   onOpenDetailModal: (student: Student) => void;
   onEditStudent: (student: Student) => void;
   onOpenAddStudentModal: () => void;
@@ -296,12 +296,12 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
       {/* Multi-select Floating Bar when items selected */}
       {isMultiSelectMode && (
-        <div className="bg-amber-900 text-amber-50 p-3 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-2 text-xs font-bold">
-            <span>Đã chọn: <b className="text-yellow-300">{selectedStudentIds.length}</b> / {students.length} học sinh</span>
+        <div className="bg-amber-950 text-amber-50 p-3 sm:p-3.5 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-3 animate-fadeIn border border-amber-500/40">
+          <div className="flex items-center gap-2 text-xs font-bold flex-wrap">
+            <span>Đã chọn: <b className="text-yellow-300 text-sm">{selectedStudentIds.length}</b> / {students.length} học sinh</span>
             <button
               onClick={handleSelectAll}
-              className="text-amber-300 hover:underline cursor-pointer ml-2"
+              className="text-amber-300 hover:underline cursor-pointer ml-1"
             >
               Chọn tất cả
             </button>
@@ -314,51 +314,84 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Khen thưởng button */}
             <button
               disabled={selectedStudentIds.length === 0}
               onClick={() => {
                 const selected = students.filter(s => selectedStudentIds.includes(s.id));
-                onOpenScoreModalForSelected(selected);
+                onOpenScoreModalForSelected(selected, 'positive');
               }}
-              className="px-4 py-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-amber-950 font-black text-xs rounded-xl shadow cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-xs rounded-xl shadow cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
+              title="Khen thưởng / Cộng điểm cho các học sinh đã chọn"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-950" />
-              <span>Khen thưởng {selectedStudentIds.length} em đồng thời</span>
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <span>Khen thưởng ({selectedStudentIds.length})</span>
+            </button>
+
+            {/* Nhắc nhở button */}
+            <button
+              disabled={selectedStudentIds.length === 0}
+              onClick={() => {
+                const selected = students.filter(s => selectedStudentIds.includes(s.id));
+                onOpenScoreModalForSelected(selected, 'reminder');
+              }}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white font-black text-xs rounded-xl shadow cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
+              title="Nhắc nhở / Trừ điểm các học sinh đã chọn"
+            >
+              <Minus className="w-3.5 h-3.5 text-white" />
+              <span>Nhắc nhở ({selectedStudentIds.length})</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Filter by Tổ Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-none">
-        <span className="text-[11px] font-bold text-amber-950 flex items-center gap-1 shrink-0 mr-1">
-          <span>Tổ:</span>
-        </span>
-        <button
-          onClick={() => setSelectedGroup('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            selectedGroup === 'all' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Tất cả ({students.length})
-        </button>
-        {groups.map(g => {
-          const count = students.filter(s => s.groupId === g.id).length;
-          return (
-            <button
-              key={g.id}
-              onClick={() => setSelectedGroup(g.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-                selectedGroup === g.id ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>{g.icon}</span>
-              <span>{g.name.split(':')[0]}</span>
-              <span className="text-[10px] opacity-75 font-normal">({count})</span>
-            </button>
-          );
-        })}
+      {/* Filter by Tổ Tabs & Quick Selection by Tổ */}
+      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          <span className="text-[11px] font-bold text-amber-950 flex items-center gap-1 shrink-0 mr-1">
+            <span>Tổ:</span>
+          </span>
+          <button
+            onClick={() => setSelectedGroup('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              selectedGroup === 'all' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tất cả ({students.length})
+          </button>
+          {groups.map(g => {
+            const count = students.filter(s => s.groupId === g.id).length;
+            return (
+              <button
+                key={g.id}
+                onClick={() => setSelectedGroup(g.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                  selectedGroup === g.id ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <span>{g.icon}</span>
+                <span>{g.name.split(':')[0]}</span>
+                <span className="text-[10px] opacity-75 font-normal">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Nút chọn nhanh cả tổ đang lọc */}
+        {selectedGroup !== 'all' && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsMultiSelectMode(true);
+              const groupStudents = students.filter(s => s.groupId === selectedGroup).map(s => s.id);
+              setSelectedStudentIds(prev => Array.from(new Set([...prev, ...groupStudents])));
+            }}
+            className="text-xs font-bold text-amber-800 hover:text-amber-950 bg-amber-100/70 hover:bg-amber-200/80 px-2.5 py-1 rounded-lg border border-amber-300 transition-colors cursor-pointer shrink-0"
+          >
+            + Chọn cả {groups.find(g => g.id === selectedGroup)?.name.split(':')[0] || 'tổ'}
+          </button>
+        )}
       </div>
 
       {/* Filter by Cấp bậc Khoa Bảng Tabs */}

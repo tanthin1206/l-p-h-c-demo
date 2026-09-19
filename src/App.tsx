@@ -303,11 +303,11 @@ export const App: React.FC = () => {
                   initialTab: category
                 });
               }}
-              onOpenScoreModalForSelected={(selectedList) => {
+              onOpenScoreModalForSelected={(selectedList, category = 'positive') => {
                 setScoreModal({
                   isOpen: true,
                   targetStudents: selectedList,
-                  initialTab: 'positive'
+                  initialTab: category
                 });
               }}
               onOpenDetailModal={(s) => setDetailStudent(s)}
