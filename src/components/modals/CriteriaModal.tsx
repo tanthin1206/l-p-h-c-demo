@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Sparkles, Plus, Trash2, Edit2, Check } from 'lucide-react';
 import { Criterion } from '../../types';
 import { soundEngine } from '../../utils/soundEngine';
+import { confirmDialog } from '../ui/dialog';
 
 interface CriteriaModalProps {
   isOpen: boolean;
@@ -56,8 +57,8 @@ export const CriteriaModal: React.FC<CriteriaModalProps> = ({
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa tiêu chí này không?")) {
+  const handleDelete = async (id: string) => {
+    if (await confirmDialog("Bạn có chắc chắn muốn xóa tiêu chí này không?")) {
       onUpdateCriteria(criteria.filter(c => c.id !== id));
       soundEngine.playPointDeduct();
     }

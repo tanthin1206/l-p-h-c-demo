@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Student, Group, Criterion } from '../../types';
 import { ChibiAvatar } from '../ChibiAvatar';
+import { notify } from '../ui/dialog';
 
 interface ScoreModalProps {
   isOpen: boolean;
@@ -103,7 +104,7 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
   // Apply chosen criterion
   const handleApply = (crit: Criterion) => {
     if (currentTargets.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 học sinh bằng cách bấm vào Cả Lớp, Tổ hoặc chọn học sinh bên dưới!");
+      notify("Vui lòng chọn ít nhất 1 học sinh bằng cách bấm vào Cả Lớp, Tổ hoặc chọn học sinh bên dưới!");
       return;
     }
     onApplyScore(currentTargets, crit);
@@ -115,7 +116,7 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
     e.preventDefault();
     if (!customName.trim()) return;
     if (currentTargets.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 học sinh trước khi chấm!");
+      notify("Vui lòng chọn ít nhất 1 học sinh trước khi chấm!");
       return;
     }
     const finalPoints = tab === 'positive' ? Math.abs(customPoint) : -Math.abs(customPoint);

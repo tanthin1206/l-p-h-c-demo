@@ -21,6 +21,7 @@ import { storage, DEFAULT_CONFIG, DEFAULT_CRITERIA } from '../../utils/storage';
 import { soundEngine } from '../../utils/soundEngine';
 import { AI_SERVICE } from '../../utils/gemini';
 import { getAssetUrl } from '../../utils/assets';
+import { notify, confirmDialog } from '../ui/dialog';
 
 interface SettingsViewProps {
   config: ClassConfig;
@@ -115,8 +116,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     });
   };
 
-  const handleDeleteCriterion = (id: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa tiêu chí chấm điểm này?")) {
+  const handleDeleteCriterion = async (id: string) => {
+    if (await confirmDialog("Bạn có chắc muốn xóa tiêu chí chấm điểm này?")) {
       const updated = criteria.filter(c => c.id !== id);
       setCriteria(updated);
       storage.saveCriteria(updated);
@@ -145,31 +146,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     reader.onload = (event) => {
       const content = event.target?.result as string;
       if (storage.importAllDataJSON(content)) {
-        alert("Khôi phục dữ liệu thành công! Trang sẽ được làm mới.");
-        window.location.reload();
+        notify("Khôi phục dữ liệu thành công! Trang sẽ được làm mới.", 'success');
+        setTimeout(() => window.location.reload(), 1200);
       } else {
-        alert("Tệp sao lưu không đúng định dạng. Vui lòng kiểm tra lại!");
+        notify("Tệp sao lưu không đúng định dạng. Vui lòng kiểm tra lại!");
       }
     };
     reader.readAsText(file);
   };
 
   // Reset to default
-  const handleResetToDefault = () => {
-    if (window.confirm("CẢNH BÁO: Thao tác này sẽ đặt lại toàn bộ dữ liệu (học sinh, điểm số, bài tập) về mặc định ban đầu. Bạn có chắc chắn không?")) {
+  const handleResetToDefault = async () => {
+    if (await confirmDialog("CẢNH BÁO: Thao tác này sẽ đặt lại toàn bộ dữ liệu (học sinh, điểm số, bài tập) về mặc định ban đầu. Bạn có chắc chắn không?")) {
       storage.resetToDefault();
       window.location.reload();
     }
   };
 
   // Reset all points to 0
-  const handleResetPointsOnly = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đặt lại điểm số của toàn bộ học sinh về 0 (khởi đầu đợt thi đua mới)?")) {
+  const handleResetPointsOnly = async () => {
+    if (await confirmDialog("Bạn có chắc chắn muốn đặt lại điểm số của toàn bộ học sinh về 0 (khởi đầu đợt thi đua mới)?")) {
       const resetList = students.map(s => ({ ...s, points: 0, stars: 0 }));
       setStudents(resetList);
       storage.saveStudents(resetList);
       soundEngine.playFestiveDrum();
-      alert("Đã đặt lại điểm số toàn bộ học sinh về 0 điểm!");
+      notify("Đã đặt lại điểm số toàn bộ học sinh về 0 điểm!");
     }
   };
 
@@ -326,7 +327,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     storage.saveConfig({ ...config, homeBanner: result });
                     try { localStorage.setItem("offlineBannerData", result); } catch {}
                     soundEngine.playPointGain();
-                    alert("Đã cập nhật banner trang chủ!");
+                    notify("Đã cập nhật banner trang chủ!");
                   };
                   reader.readAsDataURL(file);
                 }}
@@ -414,7 +415,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 setConfig(formData);
                 storage.saveConfig(formData);
                 soundEngine.playPointGain();
-                alert("Đã lưu Gemini API Key thành công!");
+                notify("Đã lưu Gemini API Key thành công!");
               }}
               className="px-5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all cursor-pointer"
             >
@@ -573,11 +574,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              if (window.confirm("Thao tác này sẽ nạp 32 học sinh mẫu chia đều 4 tổ để thử nghiệm. Bạn có chắc chắn không?")) {
+            onClick={async () => {
+              if (await confirmDialog("Thao tác này sẽ nạp 32 học sinh mẫu chia đều 4 tổ để thử nghiệm. Bạn có chắc chắn không?")) {
                 const samples = storage.loadSampleStudents();
                 setStudents(samples);
-                alert("Đã nạp 32 học sinh mẫu thành công!");
+                notify("Đã nạp 32 học sinh mẫu thành công!");
               }
             }}
             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-amber-950 border border-amber-400 font-bold text-xs sm:text-sm rounded-xl shadow transition-all cursor-pointer"
@@ -587,11 +588,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ danh sách học sinh để bắt đầu thêm lớp mới?")) {
+            onClick={async () => {
+              if (await confirmDialog("Bạn có chắc chắn muốn xóa toàn bộ danh sách học sinh để bắt đầu thêm lớp mới?")) {
                 setStudents([]);
                 storage.saveStudents([]);
-                alert("Đã xóa danh sách học sinh!");
+                notify("Đã xóa danh sách học sinh!");
               }
             }}
             className="flex items-center gap-2 px-5 py-2.5 bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer"

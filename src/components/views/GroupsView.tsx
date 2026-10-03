@@ -20,6 +20,7 @@ import { soundEngine } from '../../utils/soundEngine';
 import { storage } from '../../utils/storage';
 import { AVATAR_OPTIONS, getRankByPoints } from '../../utils/ranks';
 import { getAssetUrl } from '../../utils/assets';
+import { notify, confirmDialog } from '../ui/dialog';
 
 const ICON_SUGGESTIONS = ['🐉', '🐯', '🦅', '🐟', '🦁', '🐢', '🦄', '🕊️', '🦊', '🐼', '🐬', '🦚', '🌟', '🌸', '🎋', '⚡'];
 
@@ -95,7 +96,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
   const handleSaveGroupModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!groupFormData.name.trim()) {
-      alert('Vui lòng nhập tên tổ thi đua!');
+      notify('Vui lòng nhập tên tổ thi đua!');
       return;
     }
 
@@ -130,9 +131,9 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
     setGroupModalState({ isOpen: false, group: null });
   };
 
-  const handleDeleteGroup = (groupToDelete: Group) => {
+  const handleDeleteGroup = async (groupToDelete: Group) => {
     if (groups.length <= 1) {
-      alert('Lớp học phải có ít nhất 1 tổ thi đua! Không thể xóa hết tổ.');
+      notify('Lớp học phải có ít nhất 1 tổ thi đua! Không thể xóa hết tổ.');
       return;
     }
 
@@ -141,7 +142,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
       ? `Thầy/Cô có chắc chắn muốn xóa "${groupToDelete.name}"?\n\nHiện có ${memberCount} học sinh trong tổ này. Các học sinh sẽ được tự động chuyển sang tổ khác để không bị mất dữ liệu!`
       : `Thầy/Cô có chắc chắn muốn xóa "${groupToDelete.name}" khỏi danh sách các tổ thi đua?`;
 
-    if (!window.confirm(confirmMsg)) return;
+    if (!await confirmDialog(confirmMsg)) return;
 
     const remainingGroups = groups.filter(g => g.id !== groupToDelete.id);
     const fallbackGroup = remainingGroups[0];

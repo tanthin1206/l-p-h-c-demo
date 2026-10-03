@@ -4,6 +4,7 @@ import { Student, Group } from '../../types';
 import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { soundEngine } from '../../utils/soundEngine';
 import * as XLSX from 'xlsx';
+import { notify } from '../ui/dialog';
 
 interface BulkImportModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
   const handleParseAndImport = () => {
     if (!inputText.trim()) {
-      alert("Vui lòng dán danh sách họ tên học sinh!");
+      notify("Vui lòng dán danh sách họ tên học sinh!");
       return;
     }
 
@@ -60,13 +61,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     });
 
     if (newStudents.length === 0) {
-      alert("Không tìm thấy học sinh hợp lệ để nhập!");
+      notify("Không tìm thấy học sinh hợp lệ để nhập!");
       return;
     }
 
     onImportStudents(newStudents);
     soundEngine.playPointGain();
-    alert(`Đã nạp thành công ${newStudents.length} học sinh vào lớp!`);
+    notify(`Đã nạp thành công ${newStudents.length} học sinh vào lớp!`);
     onClose();
   };
 
@@ -110,14 +111,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         if (importedList.length > 0) {
           onImportStudents(importedList);
           soundEngine.playPointGain();
-          alert(`Đã nạp thành công ${importedList.length} học sinh từ file Excel!`);
+          notify(`Đã nạp thành công ${importedList.length} học sinh từ file Excel!`);
           onClose();
         } else {
-          alert("Không tìm thấy dữ liệu học sinh trong file Excel!");
+          notify("Không tìm thấy dữ liệu học sinh trong file Excel!");
         }
       } catch (err) {
         console.error("Excel parse error:", err);
-        alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng!");
+        notify("Lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng!");
       }
     };
     reader.readAsArrayBuffer(file);

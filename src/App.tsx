@@ -13,9 +13,10 @@ import { soundEngine } from './utils/soundEngine';
 import { getRankByPoints } from './utils/ranks';
 import confetti from 'canvas-confetti';
 
-import { SidebarNav } from './components/SidebarNav';
+import { SidebarNav, NAV_LABELS } from './components/SidebarNav';
 import { Header } from './components/Header';
 import { ToastFeedback, ToastData } from './components/ToastFeedback';
+import { DialogHost } from './components/ui/dialog';
 
 import { StudentsView } from './components/views/StudentsView';
 import { AttendanceView } from './components/views/AttendanceView';
@@ -37,7 +38,20 @@ import { RankUpModal } from './components/modals/RankUpModal';
 import { RandomCallerModal } from './components/modals/RandomCallerModal';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('students');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    const h = window.location.hash.replace('#', '') as ActiveTab;
+    return (['students', 'attendance', 'honor', 'groups', 'games', 'reports', 'settings'] as ActiveTab[]).includes(h)
+      ? h
+      : 'students';
+  });
+
+  // Keep URL hash in sync so a page refresh stays on the same tab
+  useEffect(() => {
+    if (window.location.hash !== `#${activeTab}`) {
+      history.replaceState(null, '', `#${activeTab}`);
+    }
+    window.scrollTo({ top: 0 });
+  }, [activeTab]);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -109,16 +123,30 @@ export const App: React.FC = () => {
     soundEngine.setEnabled(config.soundEnabled);
   }, [config.soundEnabled]);
 
-  // Fullscreen toggle handler
+  // Presentation (TV / projector) mode: fullscreen + larger UI + sidebar hidden
+  useEffect(() => {
+    document.documentElement.classList.toggle('presentation', isFullscreen);
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const onFsChange = () => {
+      if (!document.fullscreenElement) setIsFullscreen(false);
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
   const handleToggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+    if (!isFullscreen) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       setIsFullscreen(false);
     }
   };
+
+  const sidebarHidden = isSidebarCollapsed || isFullscreen;
 
   // Sound toggle handler
   const handleToggleSound = () => {
@@ -233,14 +261,23 @@ export const App: React.FC = () => {
     : 0;
 
   return (
-    <div className="min-h-screen text-[#2D241E] flex flex-col font-sans relative bg-[#FFFCF5]">
-      {/* Courtyard Heritage Background Layer */}
+    <div className="min-h-screen text-ink flex flex-col font-sans relative bg-paper">
+      {/* Nền giấy dó với hoa văn mờ */}
       <div id="courtyard-heritage-background" className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#6EBDF3] via-[#A7DCF8] via-30% via-[#FDF6E9] via-65% to-[#F4E8D6]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-amber-200/35 via-yellow-100/20 to-transparent rounded-full blur-3xl opacity-75" />
+        <div className="absolute inset-0 bg-gradient-to-b from-paper-warm via-paper to-paper" />
+        <div
+          className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%235B0E0E' stroke-width='1.2'%3E%3Cpath d='M28 4a24 24 0 0 1 0 48a24 24 0 0 1 0-48z'/%3E%3Cpath d='M28 16a12 12 0 0 1 0 24a12 12 0 0 1 0-24z'/%3E%3C/g%3E%3C/svg%3E\")",
+          }}
+        />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[420px] bg-gold-200/30 rounded-full blur-3xl" />
       </div>
 
-      {/* 1. SIDEBAR NAVIGATION (250px, #5B0E0E - FIXED) */}
+      <DialogHost />
+
+      {/* 1. SIDEBAR NAVIGATION (250px - FIXED) */}
       <SidebarNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -248,13 +285,13 @@ export const App: React.FC = () => {
         config={config}
         isMobileOpen={isMobileNavOpen}
         onCloseMobile={() => setIsMobileNavOpen(false)}
-        isCollapsed={isSidebarCollapsed}
+        isCollapsed={sidebarHidden}
         onToggleCollapse={handleToggleSidebar}
       />
 
       {/* 2. MAIN CONTENT WRAPPER (Offset dynamically by 250px or 0px on desktop) */}
-      <div className={`flex-1 min-w-0 flex flex-col min-h-screen relative z-10 bg-[#FFFCF5]/90 transition-[padding] duration-300 ease-in-out ${
-        isSidebarCollapsed ? 'lg:pl-0' : 'lg:pl-[250px]'
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen relative z-10 transition-[padding] duration-300 ease-in-out ${
+        sidebarHidden ? 'lg:pl-0' : 'lg:pl-[250px]'
       }`}>
         {/* Sticky Header */}
         <Header
@@ -264,9 +301,10 @@ export const App: React.FC = () => {
           onOpenSettings={() => setActiveTab('settings')}
           onToggleFullscreen={handleToggleFullscreen}
           isFullscreen={isFullscreen}
+          title={NAV_LABELS[activeTab]}
           onToggleMobileMenu={() => setIsMobileNavOpen(prev => !prev)}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={handleToggleSidebar}
+          isSidebarCollapsed={sidebarHidden}
+          onToggleSidebar={isFullscreen ? undefined : handleToggleSidebar}
           onWeeklySummary={() => setWeeklySummaryOpen(true)}
           onCallStudent={() => {
             setRandomCallerOpen(true);
@@ -282,7 +320,7 @@ export const App: React.FC = () => {
         />
 
         {/* View Router Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 relative z-10">
+        <main className={`flex-1 w-full mx-auto p-3 sm:p-6 relative z-10 ${isFullscreen ? 'max-w-none' : 'max-w-7xl'}`}>
           {activeTab === 'students' && (
             <StudentsView
               students={students}

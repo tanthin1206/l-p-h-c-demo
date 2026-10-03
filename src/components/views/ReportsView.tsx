@@ -17,6 +17,7 @@ import { Student, Group, Criterion, PointLog, ClassConfig, AttendanceDay } from 
 import { AI_SERVICE } from '../../utils/gemini';
 import { soundEngine } from '../../utils/soundEngine';
 import { getRankByPoints } from '../../utils/ranks';
+import { notify } from '../ui/dialog';
 
 interface ReportsViewProps {
   students: Student[];
@@ -65,7 +66,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   // Xuất bảng điểm danh sách học sinh ra file Excel (.xlsx)
   const handleExportExcel = () => {
     if (students.length === 0) {
-      alert("Chưa có dữ liệu học sinh để xuất Excel!");
+      notify("Chưa có dữ liệu học sinh để xuất Excel!");
       return;
     }
     soundEngine.playPointGain();
