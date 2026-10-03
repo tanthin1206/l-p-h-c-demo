@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Maximize2, X, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { Maximize2, X, Image as ImageIcon, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAssetUrl } from '../utils/assets';
 import { notify } from './ui/dialog';
 
@@ -15,6 +15,13 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
   onBannerChange
 }) => {
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => localStorage.getItem('tndv_banner_collapsed') === 'true');
+  const toggleCollapsed = () => {
+    setCollapsed(c => {
+      localStorage.setItem('tndv_banner_collapsed', String(!c));
+      return !c;
+    });
+  };
   const [currentBanner, setCurrentBanner] = useState<string>(() => {
     try {
       const saved = localStorage.getItem("offlineBannerData");
@@ -103,49 +110,64 @@ export const HeroMainBanner: React.FC<HeroMainBannerProps> = ({
     <>
       <div
         id="hero-main-banner"
-        className="w-full relative group rounded-2xl sm:rounded-3xl border-2 sm:border-3 md:border-4 border-amber-400/90 shadow-md sm:shadow-xl bg-gradient-to-b from-amber-50/50 via-white to-amber-100/40 p-1 sm:p-1.5 transition-all duration-300 hover:shadow-2xl overflow-hidden"
+        className="w-full relative group rounded-3xl border border-gold-300 shadow-card bg-white p-1.5 transition-all duration-300 hover:shadow-card-hover overflow-hidden"
       >
         <div
-          onClick={() => setIsLightboxOpen(true)}
-          className="relative w-full rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer bg-amber-950/5 flex items-center justify-center select-none"
-          title="Nhấn để xem ảnh Banner toàn màn hình"
+          onClick={() => (collapsed ? toggleCollapsed() : setIsLightboxOpen(true))}
+          className="relative w-full rounded-[1.1rem] overflow-hidden cursor-pointer bg-paper-warm flex items-center justify-center select-none"
+          title={collapsed ? 'Nhấn để mở rộng ảnh bìa' : 'Nhấn để xem ảnh bìa toàn màn hình'}
         >
           <img
             src={getAssetUrl(currentBanner)}
-            alt="Hero Banner Hành Trình Trạng Nguyên"
-            className="w-full h-auto max-h-[480px] md:max-h-[560px] object-contain block transition-transform duration-300 group-hover:scale-[1.005]"
+            alt="Ảnh bìa lớp học"
+            className={`w-full block transition-all duration-500 ${
+              collapsed
+                ? 'h-24 sm:h-28 object-cover object-center'
+                : 'h-auto max-h-[480px] md:max-h-[560px] object-contain group-hover:scale-[1.005]'
+            }`}
             loading="eager"
             onError={(e) => {
-              // Fallback if custom image fails
               (e.target as HTMLImageElement).src = getAssetUrl(DEFAULT_BANNER);
             }}
           />
 
+          {collapsed && <div className="absolute inset-0 bg-gradient-to-r from-primary-950/30 via-transparent to-primary-950/30 pointer-events-none" />}
+
           {/* Phóng to hint badge */}
-          <div className="absolute top-2.5 left-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-amber-200 p-1.5 sm:p-2 rounded-xl backdrop-blur-xs flex items-center gap-1.5 text-xs font-bold pointer-events-none shadow-md">
-            <Maximize2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Phóng to</span>
+          {!collapsed && (
+            <div className="absolute top-2.5 left-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/55 text-gold-100 p-1.5 sm:p-2 rounded-xl backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold pointer-events-none">
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Phóng to</span>
+            </div>
+          )}
+
+          {/* Controls */}
+          <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditModalOpen(true);
+              }}
+              className="bg-black/55 hover:bg-black/75 text-gold-100 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+              title="Đổi ảnh bìa lớp học"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Đổi ảnh</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCollapsed();
+              }}
+              className="bg-black/55 hover:bg-black/75 text-gold-100 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+              title={collapsed ? 'Mở rộng ảnh bìa' : 'Thu gọn ảnh bìa'}
+            >
+              {collapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{collapsed ? 'Mở rộng' : 'Thu gọn'}</span>
+            </button>
           </div>
-
-          {/* Edit banner button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditModalOpen(true);
-            }}
-            className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-900/80 hover:bg-amber-950 text-amber-200 hover:text-white p-1.5 sm:p-2 rounded-xl backdrop-blur-xs flex items-center gap-1.5 text-xs font-bold shadow-md cursor-pointer border border-amber-400/50"
-            title="Đổi ảnh bìa lớp học"
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Đổi ảnh bìa</span>
-          </button>
-
-          {/* Four golden decorative corners */}
-          <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-amber-400 pointer-events-none" />
-          <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-amber-400 pointer-events-none" />
-          <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-amber-400 pointer-events-none" />
-          <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-amber-400 pointer-events-none" />
         </div>
       </div>
 

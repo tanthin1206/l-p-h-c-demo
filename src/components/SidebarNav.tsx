@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  GraduationCap, 
-  CalendarCheck, 
-  Award, 
-  Users2, 
-  Gamepad2, 
-  BarChart3, 
-  Settings, 
+import {
+  GraduationCap,
+  CalendarCheck,
+  Award,
+  Users2,
+  Gamepad2,
+  BarChart3,
+  Settings,
   Crown,
   X,
   PanelLeftClose
@@ -24,6 +24,42 @@ interface SidebarNavProps {
   onToggleCollapse?: () => void;
 }
 
+type NavItem = {
+  id: ActiveTab;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Lớp học',
+    items: [
+      { id: 'students', label: 'Học Sinh & Điểm', icon: GraduationCap },
+      { id: 'attendance', label: 'Điểm Danh', icon: CalendarCheck },
+    ],
+  },
+  {
+    title: 'Thi đua & Vinh danh',
+    items: [
+      { id: 'groups', label: 'Thi Đua Tổ', icon: Users2 },
+      { id: 'honor', label: 'Bảng Vàng', icon: Award },
+      { id: 'games', label: 'Trò Chơi', icon: Gamepad2 },
+    ],
+  },
+  {
+    title: 'Quản lý',
+    items: [
+      { id: 'reports', label: 'Báo Cáo & AI', icon: BarChart3 },
+      { id: 'settings', label: 'Cài Đặt', icon: Settings },
+    ],
+  },
+];
+
+export const NAV_LABELS: Record<ActiveTab, string> = NAV_SECTIONS.flatMap(s => s.items).reduce(
+  (acc, it) => ({ ...acc, [it.id]: it.label }),
+  {} as Record<ActiveTab, string>
+);
+
 export const SidebarNav: React.FC<SidebarNavProps> = ({
   activeTab,
   onTabChange,
@@ -34,132 +70,121 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   isCollapsed = false,
   onToggleCollapse,
 }) => {
-  const navItems: {
-    id: ActiveTab;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    badge: string | null;
-    badgeColor: string;
-  }[] = [
-    { id: "students", label: "Học Sinh & Điểm", icon: GraduationCap, badge: null, badgeColor: "" },
-    { id: "attendance", label: "Điểm Danh", icon: CalendarCheck, badge: todayAbsentCount > 0 ? `${todayAbsentCount} vắng` : null, badgeColor: "bg-amber-400 text-red-950 font-bold" },
-    { id: "honor", label: "Bảng Vàng & Vinh Danh", icon: Award, badge: "Vinh danh", badgeColor: "bg-amber-400 text-amber-950 font-black" },
-    { id: "groups", label: "Thi Đua Tổ", icon: Users2, badge: null, badgeColor: "" },
-    { id: "games", label: "Trò Chơi Trạng Nguyên", icon: Gamepad2, badge: "Vui nhộn", badgeColor: "bg-rose-400 text-white font-bold" },
-    { id: "reports", label: "Báo Cáo & AI", icon: BarChart3, badge: "AI 3.7", badgeColor: "bg-amber-300 text-amber-950 font-bold" },
-    { id: "settings", label: "Cài Đặt Hệ Thống", icon: Settings, badge: null, badgeColor: "" },
-  ];
-
   const handleSelectTab = (tab: ActiveTab) => {
     onTabChange(tab);
     if (onCloseMobile) onCloseMobile();
   };
 
+  const badgeFor = (id: ActiveTab) =>
+    id === 'attendance' && todayAbsentCount > 0 ? `${todayAbsentCount} vắng` : null;
+
   return (
     <>
-      {/* Mobile Backdrop */}
       {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+        <div
+          className="fixed inset-0 bg-primary-950/60 backdrop-blur-[2px] z-40 lg:hidden animate-fade-in"
           onClick={onCloseMobile}
         />
       )}
 
-      {/* Main Sidebar */}
       <aside
         id="app-sidebar-nav"
         className={`
           fixed top-0 bottom-0 left-0 z-40 lg:z-30
-          w-[250px] min-w-[250px] max-w-[250px] h-screen
-          bg-[#5B0E0E] text-white
-          border-r-2 border-amber-500/30 shadow-2xl
-          flex flex-col justify-between
+          w-[250px] h-screen
+          bg-gradient-to-b from-primary-900 via-primary-900 to-primary-950 text-white
+          border-r border-gold-500/25 shadow-2xl
+          flex flex-col
           transition-transform duration-300 ease-in-out select-none
-          ${isMobileOpen ? "translate-x-0 !z-50" : isCollapsed ? "-translate-x-full" : "-translate-x-full lg:translate-x-0"}
+          ${isMobileOpen ? 'translate-x-0 !z-50' : isCollapsed ? '-translate-x-full' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Top Header Logo & Nav Items */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="p-4 border-b border-amber-500/20 bg-black/15 shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-amber-950 flex items-center justify-center shadow-lg border border-amber-200 shrink-0 transform hover:scale-105 transition-transform">
-                  <Crown className="w-6 h-6 text-amber-950 fill-yellow-300" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-base font-black tracking-tight font-serif text-amber-200 leading-tight drop-shadow-sm truncate">
-                    Trạng Nguyên Nhí
-                  </h1>
-                  <div className="text-[11px] font-semibold text-amber-300/90 font-sans tracking-wide uppercase">
-                    Đất Việt
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1 shrink-0">
-                {/* Desktop Collapse Button */}
-                {onToggleCollapse && (
-                  <button
-                    type="button"
-                    onClick={onToggleCollapse}
-                    className="hidden lg:flex p-1.5 rounded-lg text-amber-200/80 hover:text-amber-100 hover:bg-white/10 transition-colors cursor-pointer"
-                    title="Thu gọn menu (Ẩn thanh bên)"
-                  >
-                    <PanelLeftClose className="w-5 h-5" />
-                  </button>
-                )}
-
-                {/* Mobile Close Button */}
-                {onCloseMobile && (
-                  <button
-                    type="button"
-                    onClick={onCloseMobile}
-                    className="lg:hidden p-1.5 rounded-lg text-amber-200 hover:bg-white/10 cursor-pointer"
-                    title="Đóng menu"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
+        {/* Brand */}
+        <div className="h-14 px-4 flex items-center justify-between border-b border-gold-500/20 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gold-200 via-gold-400 to-gold-600 flex items-center justify-center shadow-md ring-1 ring-gold-200/60 shrink-0">
+              <Crown className="w-5 h-5 text-primary-900 fill-gold-200" />
+            </div>
+            <div className="min-w-0 leading-tight">
+              <div className="text-[15px] font-black font-serif text-gold-100 truncate">Trạng Nguyên Nhí</div>
+              <div className="text-[10px] font-bold text-gold-400/90 tracking-[0.2em] uppercase">Đất Việt</div>
             </div>
           </div>
 
-          {/* Nav Items */}
-          <nav className="p-3 space-y-1.5 overflow-y-auto flex-1 scrollbar-thin font-sans">
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectTab(item.id)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none text-left ${
-                    isActive
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 shadow-md scale-[1.02]'
-                      : 'text-amber-100/85 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-950' : 'text-amber-400'}`} />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-
-                  {item.badge && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase shrink-0 shadow-xs ${item.badgeColor}`}>
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <div className="flex items-center shrink-0">
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                className="hidden lg:flex p-1.5 rounded-lg text-gold-200/70 hover:text-gold-100 hover:bg-white/10 transition-colors cursor-pointer"
+                title="Ẩn thanh menu"
+              >
+                <PanelLeftClose className="w-[18px] h-[18px]" />
+              </button>
+            )}
+            {onCloseMobile && (
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="lg:hidden p-1.5 rounded-lg text-gold-200 hover:bg-white/10 cursor-pointer"
+                title="Đóng menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Bottom Sidebar Footer */}
-        <div className="p-3 border-t border-amber-500/20 bg-black/20 text-center text-xs text-amber-200/70 font-serif shrink-0">
-          <div className="font-bold text-amber-200">{config.className}</div>
-          <div className="text-[11px] truncate">{config.schoolName}</div>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-none">
+          {NAV_SECTIONS.map(section => (
+            <div key={section.title}>
+              <div className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-gold-400/60">
+                {section.title}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  const badge = badgeFor(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelectTab(item.id)}
+                      className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer text-left ${
+                        isActive
+                          ? 'bg-gradient-to-r from-gold-300 to-gold-400 text-primary-950 shadow-md font-bold'
+                          : 'text-gold-50/80 hover:bg-white/[0.07] hover:text-white'
+                      }`}
+                    >
+                      <Icon
+                        className={`w-[18px] h-[18px] shrink-0 ${
+                          isActive ? 'text-primary-900' : 'text-gold-400/80 group-hover:text-gold-300'
+                        }`}
+                      />
+                      <span className="truncate flex-1">{item.label}</span>
+                      {badge && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded-md text-[10px] font-black shrink-0 ${
+                            isActive ? 'bg-primary-900 text-gold-200' : 'bg-gold-400 text-primary-950'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="m-3 p-3 rounded-2xl bg-white/[0.06] border border-gold-500/15 shrink-0">
+          <div className="text-[10px] uppercase tracking-widest text-gold-400/70 font-bold">Lớp chủ nhiệm</div>
+          <div className="text-sm font-black font-serif text-gold-100 truncate">{config.className}</div>
+          <div className="text-[11px] text-gold-50/60 truncate">{config.schoolName}</div>
         </div>
       </aside>
     </>
