@@ -174,43 +174,46 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
   return (
     <div
       id="random-caller-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-fadeIn select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-primary-950/60 backdrop-blur-[2px] animate-fade-in select-none"
     >
       <div
         id="random-caller-modal-container"
-        className="bg-gradient-to-b from-[#FFF8E7] to-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl border-4 border-amber-400 relative font-sans max-h-[96vh] overflow-y-auto"
+        className="bg-white rounded-3xl max-w-4xl w-full shadow-pop border border-paper-line relative font-sans max-h-[96vh] flex flex-col overflow-hidden animate-pop-in"
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer z-10"
-          title="Đóng (Esc)"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {/* Header */}
-        <div className="text-center mb-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">
-            <RotateCw className="w-3.5 h-3.5 text-amber-700" />
-            <span>Gọi Môn Sinh (Phím F2)</span>
+        <div className="flex items-start gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-paper-line bg-gradient-to-b from-paper-warm to-white">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-700 to-primary-900 text-gold-200 flex items-center justify-center shrink-0">
+            <RotateCw className="w-5 h-5" />
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-red-900 font-serif">
-            Vòng Quay May Mắn
-          </h3>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-black text-ink font-serif leading-tight">
+              Vòng Quay May Mắn
+            </h3>
+            <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-1.5">
+              <span>Gọi Môn Sinh</span>
+              <kbd className="px-1.5 py-0.5 rounded-md bg-white border border-paper-line text-[10px] font-bold text-ink-soft">F2</kbd>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 -mr-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink cursor-pointer"
+            title="Đóng (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
         {/* Filters */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3">
-          <span className="text-[11px] font-bold text-amber-950 flex items-center gap-1 mr-1">
-            <Users className="w-3.5 h-3.5 text-amber-700" /> Quay trong:
+        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 mb-4">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted flex items-center gap-1 mr-1">
+            <Users className="w-3.5 h-3.5" /> Quay trong:
           </span>
           <button
             type="button"
             disabled={isSpinning}
             onClick={() => setGroupFilter('all')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all disabled:opacity-60 ${
-              groupFilter === 'all' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white border border-amber-200 text-slate-700 hover:bg-amber-50'
-            }`}
+            className={`chip disabled:opacity-60 disabled:cursor-not-allowed ${groupFilter === 'all' ? 'chip-active' : ''}`}
           >
             Cả lớp ({students.length})
           </button>
@@ -220,20 +223,18 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
               type="button"
               disabled={isSpinning}
               onClick={() => setGroupFilter(g.id)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all disabled:opacity-60 ${
-                groupFilter === g.id ? 'bg-amber-600 text-white shadow-xs' : 'bg-white border border-amber-200 text-slate-700 hover:bg-amber-50'
-              }`}
+              className={`chip disabled:opacity-60 disabled:cursor-not-allowed ${groupFilter === g.id ? 'chip-active' : ''}`}
             >
               {g.icon} {g.name.split(':')[0]}
             </button>
           ))}
-          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 ml-2 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-xs font-bold text-ink-soft ml-1 sm:ml-2 px-2.5 py-1.5 rounded-full bg-paper-warm border border-paper-line cursor-pointer">
             <input
               type="checkbox"
               checked={skipCalled}
               disabled={isSpinning}
               onChange={e => setSkipCalled(e.target.checked)}
-              className="accent-amber-600 w-3.5 h-3.5"
+              className="accent-primary-700 w-3.5 h-3.5"
             />
             Bỏ qua em đã gọi
           </label>
@@ -245,16 +246,16 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
             {/* Pointer */}
             <div className="absolute left-1/2 -translate-x-1/2 -top-2 z-20 drop-shadow-lg">
               <svg width="44" height="54" viewBox="0 0 44 54">
-                <path d="M22 54 L4 14 A20 20 0 1 1 40 14 Z" fill="#B91C1C" stroke="#FDE68A" strokeWidth="3" />
-                <circle cx="22" cy="18" r="7" fill="#FDE68A" />
+                <path d="M22 54 L4 14 A20 20 0 1 1 40 14 Z" fill="#8A1F19" stroke="#FCD34D" strokeWidth="3" />
+                <circle cx="22" cy="18" r="7" fill="#FCD34D" />
               </svg>
             </div>
 
             {/* Outer ring */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-300 via-amber-500 to-yellow-700 p-2.5 shadow-[0_10px_40px_rgba(180,83,9,0.45)]">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-300 via-gold-500 to-gold-700 p-2.5 shadow-card-hover ring-1 ring-gold-700/30">
               <div className="w-full h-full rounded-full overflow-hidden bg-white">
                 {pool.length === 0 ? (
-                  <div className="w-full h-full flex items-center justify-center text-sm text-slate-500 font-bold p-8 text-center">
+                  <div className="w-full h-full flex items-center justify-center text-sm text-ink-muted font-bold p-8 text-center">
                     Chưa có học sinh nào trong nhóm này
                   </div>
                 ) : (
@@ -308,7 +309,7 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
               type="button"
               onClick={handleSpin}
               disabled={isSpinning || pool.length === 0}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-red-600 to-red-800 border-4 border-yellow-300 shadow-xl text-yellow-100 font-black text-sm sm:text-base flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform disabled:cursor-not-allowed"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary-600 to-primary-900 border-4 border-gold-300 shadow-pop text-gold-100 font-black text-sm sm:text-base flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform disabled:cursor-not-allowed"
               title="Quay (Space)"
             >
               {isSpinning ? '...' : 'QUAY'}
@@ -317,10 +318,10 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
 
           {/* Result panel */}
           <div className="flex-1 w-full min-w-0 flex flex-col gap-3">
-            <div className="border-4 border-dashed border-amber-300 bg-amber-50/70 rounded-3xl p-4 min-h-[210px] flex flex-col items-center justify-center text-center">
+            <div className="border-2 border-dashed border-gold-300 bg-paper-warm rounded-3xl p-4 min-h-[210px] flex flex-col items-center justify-center text-center">
               {chosenStudent ? (
-                <div className="animate-fadeIn flex flex-col items-center">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-amber-700 mb-1">
+                <div className="animate-pop-in flex flex-col items-center">
+                  <div className="text-[11px] font-black uppercase tracking-widest text-gold-800 mb-1">
                     🎉 Môn sinh được chọn 🎉
                   </div>
                   <ChibiAvatar
@@ -330,28 +331,30 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
                     showAura={true}
                     customPhotoUrl={chosenStudent.customPhotoUrl}
                   />
-                  <div className="text-2xl sm:text-3xl font-black text-red-900 font-serif mt-2 leading-tight">
+                  <div className="text-2xl sm:text-3xl font-black text-primary-900 font-serif mt-2 leading-tight">
                     {chosenStudent.name}
                   </div>
-                  <div className="text-xs text-slate-500 font-medium mt-0.5">
+                  <div className="text-xs text-ink-muted font-medium mt-0.5">
                     {groups.find(g => g.id === chosenStudent.groupId)?.name} • {chosenStudent.role}
                   </div>
                 </div>
               ) : (
-                <div className="text-amber-950/80">
-                  <Sparkles className="w-10 h-10 mx-auto text-amber-500 mb-2" />
-                  <div className="text-lg font-black font-serif">
+                <div className="text-ink-soft">
+                  <div className="w-14 h-14 rounded-2xl bg-gold-100 text-gold-700 flex items-center justify-center mx-auto mb-2">
+                    <Sparkles className="w-7 h-7" />
+                  </div>
+                  <div className="text-lg font-black font-serif text-ink">
                     {isSpinning ? 'Vòng quay đang chạy...' : 'Bấm QUAY để chọn môn sinh'}
                   </div>
-                  <div className="text-xs mt-1 text-slate-500">
-                    Hoặc nhấn phím <kbd className="px-1.5 py-0.5 bg-white border rounded">Space</kbd>
+                  <div className="text-xs mt-1 text-ink-muted">
+                    Hoặc nhấn phím <kbd className="px-1.5 py-0.5 bg-white border border-paper-line rounded-md font-bold text-ink-soft">Space</kbd>
                   </div>
                 </div>
               )}
             </div>
 
             {chosenStudent && (
-              <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-3 flex items-center justify-center gap-2 flex-wrap text-xs font-bold text-emerald-900">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-center gap-2 flex-wrap text-xs font-bold text-emerald-900 animate-fade-in">
                 {awarded ? (
                   <span>✅ Đã cộng +{awarded} điểm cho {chosenStudent.name}</span>
                 ) : (
@@ -361,7 +364,7 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
                       <button
                         key={p}
                         onClick={() => handleQuickAward(p)}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs cursor-pointer"
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm cursor-pointer transition active:scale-95"
                       >
                         +{p} điểm
                       </button>
@@ -377,16 +380,16 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
                 type="button"
                 onClick={handleSpin}
                 disabled={isSpinning || pool.length === 0}
-                className="flex-1 py-3 bg-gradient-to-r from-red-600 to-amber-700 hover:from-red-700 hover:to-amber-800 text-white font-black text-sm rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 bg-primary-800 hover:bg-primary-900 text-gold-100 font-black text-sm rounded-xl shadow-sm transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
-                <RotateCw className={`w-4 h-4 ${isSpinning ? 'animate-spin' : ''}`} />
+                <RotateCw className={`w-4 h-4 text-gold-300 ${isSpinning ? 'animate-spin' : ''}`} />
                 <span>{isSpinning ? 'Đang quay...' : chosenStudent ? 'Quay tiếp' : 'Quay ngay'}</span>
               </button>
               <button
                 type="button"
                 onClick={handleReset}
                 disabled={isSpinning}
-                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer flex items-center gap-1.5 disabled:opacity-60"
+                className="px-4 py-3 bg-white border border-paper-line hover:border-gold-400 text-ink-soft hover:text-ink font-bold text-xs rounded-xl cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Đặt lại danh sách đã gọi"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -394,11 +397,12 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
               </button>
             </div>
 
-            <div className="text-[11px] text-slate-500 text-center">
-              Trên vòng quay: <b>{pool.length}</b> em • Đã gọi: <b>{calledInFilter}</b>
+            <div className="text-[11px] text-ink-muted text-center">
+              Trên vòng quay: <b className="text-ink">{pool.length}</b> em • Đã gọi: <b className="text-ink">{calledInFilter}</b>
               {skipCalled && ' (các em đã gọi sẽ không xuất hiện lại cho đến khi làm mới)'}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { X, Upload, Users, Check, FileSpreadsheet } from 'lucide-react';
+import { X, Upload, Users, FileSpreadsheet } from 'lucide-react';
 import { Student, Group } from '../../types';
 import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { soundEngine } from '../../utils/soundEngine';
 import * as XLSX from 'xlsx';
 import { notify } from '../ui/dialog';
+import { Button } from '../ui';
 
 interface BulkImportModalProps {
   isOpen: boolean;
@@ -127,68 +128,73 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   return (
     <div
       id="bulk-import-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-primary-950/55 backdrop-blur-[2px] animate-fade-in font-sans"
     >
       <div
         id="bulk-import-modal-card"
-        className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-400 relative max-h-[90vh] overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-3xl w-full max-w-lg shadow-pop border border-paper-line flex flex-col max-h-[94vh] overflow-hidden animate-pop-in"
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="text-center mb-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
-            Nhập Danh Sách Học Sinh
-          </span>
-          <h3 className="text-2xl font-black text-slate-800 mt-1 font-serif">
-            Nhập Hàng Loạt Tự Động
-          </h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Dán danh sách họ tên mỗi em 1 dòng hoặc tải lên tệp Excel (.xlsx, .csv)
-          </p>
-        </div>
-
-        {/* Default group select */}
-        <div className="mb-4">
-          <label className="block text-xs font-bold text-slate-700 mb-1">Xếp vào tổ:</label>
-          <select
-            value={defaultGroup}
-            onChange={e => setDefaultGroup(e.target.value)}
-            className="w-full px-3 py-2 bg-amber-50/50 border border-amber-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+        {/* Header */}
+        <div className="flex items-start gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-paper-line bg-gradient-to-b from-paper-warm to-white">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-700 to-primary-900 text-gold-200 flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-black font-serif text-ink leading-tight">Nhập Hàng Loạt Tự Động</h2>
+            <div className="text-xs text-ink-muted mt-0.5">
+              Nhập Danh Sách Học Sinh • Dán danh sách họ tên mỗi em 1 dòng hoặc tải lên tệp Excel (.xlsx, .csv)
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 -mr-1.5 rounded-lg text-ink-muted hover:bg-paper-warm hover:text-ink cursor-pointer"
+            title="Đóng (Esc)"
           >
-            {groups.map(g => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Option 1: Paste Text */}
-        <div className="mb-4">
-          <label className="block text-xs font-bold text-slate-700 mb-1">
-            Cách 1: Dán danh sách tên học sinh (mỗi em một dòng):
-          </label>
-          <textarea
-            id="textarea-paste-students"
-            rows={5}
-            value={inputText}
-            onChange={e => setInputText(e.target.value)}
-            placeholder={`Nguyễn Gia Bảo\nTrần Minh Khang, Nam, 2016-08-20\nLê Bảo Ngọc, Nữ, 2016-02-15`}
-            className="w-full p-3 border border-amber-300 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 bg-amber-50/20"
-          />
-        </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+          {/* Default group select */}
+          <div>
+            <label className="block text-xs font-bold text-ink-soft mb-1">Xếp vào tổ:</label>
+            <select
+              value={defaultGroup}
+              onChange={e => setDefaultGroup(e.target.value)}
+              className="input font-semibold"
+            >
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* File Upload Option */}
-        <div className="mb-5 p-3 bg-amber-50/70 border border-dashed border-amber-300 rounded-2xl text-center">
-          <label className="flex flex-col items-center justify-center cursor-pointer">
+          {/* Option 1: Paste Text */}
+          <div>
+            <label className="block text-xs font-bold text-ink-soft mb-1">
+              Cách 1: Dán danh sách tên học sinh (mỗi em một dòng):
+            </label>
+            <textarea
+              id="textarea-paste-students"
+              rows={6}
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              placeholder={`Nguyễn Gia Bảo\nTrần Minh Khang, Nam, 2016-08-20\nLê Bảo Ngọc, Nữ, 2016-02-15`}
+              className="input font-mono text-xs leading-relaxed resize-y"
+            />
+          </div>
+
+          {/* File Upload Option */}
+          <label className="flex flex-col items-center justify-center p-4 bg-paper-warm hover:bg-gold-50 border-2 border-dashed border-paper-line hover:border-gold-400 rounded-2xl text-center cursor-pointer transition-colors select-none">
             <FileSpreadsheet className="w-7 h-7 text-emerald-600 mb-1" />
-            <span className="text-xs font-bold text-slate-700">Hoặc chọn file Excel / CSV từ máy</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Tự động nhận diện cột họ tên</span>
+            <span className="text-xs font-bold text-ink">Hoặc chọn file Excel / CSV từ máy</span>
+            <span className="text-[10px] text-ink-muted mt-0.5">Tự động nhận diện cột họ tên</span>
             <input
               type="file"
               accept=".xlsx, .xls, .csv"
@@ -198,20 +204,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           </label>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs"
-          >
+        {/* Footer */}
+        <div className="px-5 sm:px-6 py-3.5 border-t border-paper-line bg-paper-warm flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>
             Hủy
-          </button>
-          <button
-            onClick={handleParseAndImport}
-            className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow transition-all"
-          >
+          </Button>
+          <Button variant="primary" icon={Upload} onClick={handleParseAndImport}>
             Nạp Học Sinh
-          </button>
+          </Button>
         </div>
       </div>
     </div>

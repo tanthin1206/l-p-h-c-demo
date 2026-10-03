@@ -1,7 +1,11 @@
 import React from 'react';
 import { 
   Wrench,
-  Camera
+  Camera,
+  Users,
+  Star,
+  Crown,
+  CalendarCheck
 } from 'lucide-react';
 import { ClassConfig, Student, AttendanceDay } from '../types';
 
@@ -14,6 +18,21 @@ interface ClassTeacherInfoCardProps {
   onToggleEditMode?: () => void;
   onOpenTeacherAvatarUpload?: () => void;
 }
+
+const StatPill: React.FC<{
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: React.ReactNode;
+  tone: string;
+}> = ({ icon: Icon, label, value, tone }) => (
+  <div className="flex items-center gap-1.5 rounded-xl border border-paper-line bg-paper-warm/70 pl-1 pr-2.5 py-1">
+    <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${tone}`}>
+      <Icon className="w-3.5 h-3.5" />
+    </span>
+    <span className="text-[10px] uppercase font-bold tracking-wide text-ink-muted whitespace-nowrap">{label}</span>
+    <span className="text-xs sm:text-sm font-black text-ink tabular-nums">{value}</span>
+  </div>
+);
 
 export const ClassTeacherInfoCard: React.FC<ClassTeacherInfoCardProps> = ({
   config,
@@ -40,21 +59,21 @@ export const ClassTeacherInfoCard: React.FC<ClassTeacherInfoCardProps> = ({
   return (
     <div
       id="section-class-teacher-info"
-      className="bg-white/95 backdrop-blur-xs rounded-2xl p-2.5 sm:py-2.5 sm:px-4 border-2 border-amber-300/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-3"
+      className="card px-3 py-2.5 sm:px-4 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3"
     >
       {/* Left: Avatar + Info */}
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 w-full md:w-auto">
+      <div className="flex items-center gap-3 min-w-0 w-full md:w-auto md:flex-1">
         {/* Avatar */}
-        <div className="relative shrink-0 group">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-b from-amber-100 to-yellow-50 border-2 border-amber-400 p-0.5 shadow-xs overflow-hidden flex items-center justify-center">
+        <div className="relative shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-gold-50 ring-2 ring-gold-300 ring-offset-1 ring-offset-white overflow-hidden flex items-center justify-center">
             {customTeacherAvatar && customTeacherAvatar.trim() ? (
               <img
                 src={customTeacherAvatar}
                 alt="Teacher Avatar"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full rounded-lg bg-gradient-to-b from-amber-200 to-orange-100 flex items-center justify-center text-xl">
+              <div className="w-full h-full bg-gradient-to-b from-gold-100 to-gold-50 flex items-center justify-center text-xl">
                 👩‍🏫
               </div>
             )}
@@ -63,7 +82,7 @@ export const ClassTeacherInfoCard: React.FC<ClassTeacherInfoCardProps> = ({
             <button
               type="button"
               onClick={onOpenTeacherAvatarUpload}
-              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-xs transition-transform cursor-pointer border border-white"
+              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary-700 hover:bg-primary-800 text-gold-100 flex items-center justify-center shadow-sm cursor-pointer border-2 border-white"
               title="Đổi ảnh đại diện Giáo viên"
             >
               <Camera className="w-2.5 h-2.5" />
@@ -74,64 +93,48 @@ export const ClassTeacherInfoCard: React.FC<ClassTeacherInfoCardProps> = ({
         {/* Text Details */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <h3 className="text-sm sm:text-base font-bold text-amber-950 font-serif truncate">
+            <h3 className="text-sm sm:text-base font-black text-ink font-serif truncate">
               {config.teacherName}
             </h3>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-900 border border-amber-300 font-sans">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold-100 text-gold-800">
               {config.teacherTitle || "GVCN"}
             </span>
-            <span className="font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200 text-[10px]">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 text-primary-800 border border-primary-100">
               🏫 {config.className}
-            </span>
-            <span className="hidden xl:inline text-[11px] text-slate-500 font-sans truncate">
-              • {config.schoolName}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-600 font-sans mt-0.5 flex-wrap">
-            {config.topic && (
-              <span className="text-amber-900 truncate max-w-xs">
-                🌸 <span className="italic">{config.topic}</span>
-              </span>
+          <div className="flex items-center gap-1.5 text-[11px] text-ink-muted mt-0.5 min-w-0">
+            {config.schoolName && (
+              <span className="truncate">{config.schoolName}</span>
             )}
-            {config.topic && config.classMotto && (
-              <span className="opacity-40 hidden sm:inline">•</span>
+            {config.topic && (
+              <>
+                {config.schoolName && <span className="opacity-50 hidden sm:inline">•</span>}
+                <span className="hidden sm:inline truncate max-w-xs text-ink-soft">
+                  🌸 <span className="italic">{config.topic}</span>
+                </span>
+              </>
             )}
             {config.classMotto && (
-              <span className="text-red-900 hidden sm:inline font-medium truncate max-w-xs">
-                📜 {config.classMotto}
-              </span>
+              <>
+                <span className="opacity-50 hidden lg:inline">•</span>
+                <span className="hidden lg:inline text-primary-800 font-medium truncate max-w-xs">
+                  📜 {config.classMotto}
+                </span>
+              </>
             )}
           </div>
         </div>
       </div>
 
       {/* Right: 4 compact Stat Pills & Edit Button */}
-      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-between md:justify-end w-full md:w-auto shrink-0">
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-          {/* Sĩ số */}
-          <div className="bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1 text-center flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold text-amber-700">Sĩ số:</span>
-            <span className="text-xs sm:text-sm font-black text-amber-950">{students.length}</span>
-          </div>
-
-          {/* Hoa điểm */}
-          <div className="bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1 text-center flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold text-amber-700">Hoa điểm:</span>
-            <span className="text-xs sm:text-sm font-black text-yellow-600">{totalPoints.toLocaleString()}⭐</span>
-          </div>
-
-          {/* Trạng nguyên */}
-          <div className="bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1 text-center flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold text-amber-700">Trạng nguyên:</span>
-            <span className="text-xs sm:text-sm font-black text-amber-800">{trangNguyenCount}👑</span>
-          </div>
-
-          {/* Chuyên cần */}
-          <div className="bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1 text-center flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold text-amber-700">Chuyên cần:</span>
-            <span className="text-xs sm:text-sm font-black text-emerald-700">{attendanceRate}%</span>
-          </div>
+      <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-1 md:flex-none md:flex-wrap md:justify-end">
+          <StatPill icon={Users} label="Sĩ số" value={students.length} tone="bg-primary-50 text-primary-700" />
+          <StatPill icon={Star} label="Hoa điểm" value={totalPoints.toLocaleString()} tone="bg-gold-100 text-gold-700" />
+          <StatPill icon={Crown} label="Trạng nguyên" value={trangNguyenCount} tone="bg-gold-100 text-gold-800" />
+          <StatPill icon={CalendarCheck} label="Chuyên cần" value={`${attendanceRate}%`} tone="bg-emerald-50 text-emerald-700" />
         </div>
 
         {/* Edit mode toggle button */}
@@ -139,10 +142,10 @@ export const ClassTeacherInfoCard: React.FC<ClassTeacherInfoCardProps> = ({
           id="btn-toggle-edit-mode"
           type="button"
           onClick={onToggleEditMode}
-          className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
+          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
             isEditMode
-              ? "bg-red-600 text-white border-red-700 shadow-xs ring-2 ring-red-300"
-              : "bg-slate-50 hover:bg-amber-50 text-slate-700 border-slate-200 shadow-xs"
+              ? "bg-primary-700 text-gold-100 border-primary-800 shadow-sm ring-2 ring-primary-200"
+              : "bg-white hover:border-gold-400 text-ink-soft hover:text-ink border-paper-line"
           }`}
           title="Bật/Tắt chế độ chỉnh sửa giao diện & hình ảnh"
         >

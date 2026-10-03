@@ -1,27 +1,30 @@
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  Save, 
-  RotateCcw, 
-  Download, 
-  Upload, 
-  Plus, 
-  Trash2, 
-  Sparkles, 
-  Key, 
-  Check, 
+import {
+  Settings,
+  Save,
+  RotateCcw,
+  Download,
+  Upload,
+  Trash2,
+  Sparkles,
+  Key,
+  Check,
   AlertTriangle,
   School,
   Image as ImageIcon,
   CheckCircle2,
-  Loader2
+  Loader2,
+  ListChecks,
+  Database,
+  Bot
 } from 'lucide-react';
 import { ClassConfig, Criterion, Student, Group } from '../../types';
-import { storage, DEFAULT_CONFIG, DEFAULT_CRITERIA } from '../../utils/storage';
+import { storage } from '../../utils/storage';
 import { soundEngine } from '../../utils/soundEngine';
 import { AI_SERVICE } from '../../utils/gemini';
 import { getAssetUrl } from '../../utils/assets';
 import { notify, confirmDialog } from '../ui/dialog';
+import { Button, Card, PageHeader } from '../ui';
 
 interface SettingsViewProps {
   config: ClassConfig;
@@ -33,6 +36,36 @@ interface SettingsViewProps {
   groups: Group[];
 }
 
+type SettingsTab = 'class' | 'criteria' | 'appearance' | 'data' | 'ai';
+
+const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'class', label: 'Lớp học', icon: School },
+  { id: 'criteria', label: 'Tiêu chí chấm điểm', icon: ListChecks },
+  { id: 'appearance', label: 'Giao diện & ảnh bìa', icon: ImageIcon },
+  { id: 'data', label: 'Dữ liệu & sao lưu', icon: Database },
+  { id: 'ai', label: 'AI', icon: Bot },
+];
+
+const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="block text-xs font-bold text-ink-soft mb-1">{children}</label>
+);
+
+const SectionTitle: React.FC<{
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description?: React.ReactNode;
+}> = ({ icon: Icon, title, description }) => (
+  <div className="mb-4">
+    <h3 className="text-base sm:text-lg font-black font-serif text-ink flex items-center gap-2">
+      <span className="w-8 h-8 rounded-xl bg-gold-100 text-gold-700 flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4" />
+      </span>
+      <span>{title}</span>
+    </h3>
+    {description && <p className="text-xs text-ink-muted mt-1.5 leading-relaxed">{description}</p>}
+  </div>
+);
+
 export const SettingsView: React.FC<SettingsViewProps> = ({
   config,
   setConfig,
@@ -42,6 +75,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   setStudents,
   groups
 }) => {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('class');
   const [formData, setFormData] = useState<ClassConfig>({ ...config });
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [isTestingKey, setIsTestingKey] = useState<boolean>(false);
@@ -174,442 +208,482 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
+  const handleLoadSamples = async () => {
+    if (await confirmDialog("Thao tác này sẽ nạp 32 học sinh mẫu chia đều 4 tổ để thử nghiệm. Bạn có chắc chắn không?")) {
+      const samples = storage.loadSampleStudents();
+      setStudents(samples);
+      notify("Đã nạp 32 học sinh mẫu thành công!");
+    }
+  };
+
+  const handleClearStudents = async () => {
+    if (await confirmDialog("Bạn có chắc chắn muốn xóa toàn bộ danh sách học sinh để bắt đầu thêm lớp mới?")) {
+      setStudents([]);
+      storage.saveStudents([]);
+      notify("Đã xóa danh sách học sinh!");
+    }
+  };
+
+  const handleHomeBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const result = evt.target?.result as string;
+      setFormData({ ...formData, homeBanner: result });
+      storage.saveConfig({ ...config, homeBanner: result });
+      try { localStorage.setItem("offlineBannerData", result); } catch {}
+      soundEngine.playPointGain();
+      notify("Đã cập nhật banner trang chủ!");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const positiveCount = criteria.filter(c => c.points > 0).length;
+
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      {/* Settings Header */}
-      <div className="bg-white/80 backdrop-blur rounded-2xl p-5 shadow-md border border-amber-200">
-        <h2 className="text-xl sm:text-2xl font-black text-amber-950 font-serif flex items-center gap-2">
-          <Settings className="w-6 h-6 text-amber-600" />
-          <span>Cài Đặt Hệ Thống & Quản Trị Dữ Liệu</span>
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Tùy chỉnh thông tin trường lớp, bộ tiêu chí chấm điểm và sao lưu / khôi phục dữ liệu
-        </p>
+    <div className="max-w-5xl mx-auto">
+      <PageHeader
+        icon={Settings}
+        title="Cài Đặt Hệ Thống & Quản Trị Dữ Liệu"
+        subtitle="Tùy chỉnh thông tin trường lớp, bộ tiêu chí chấm điểm và sao lưu / khôi phục dữ liệu"
+      />
+
+      {/* Tabs (segmented control) */}
+      <div
+        role="tablist"
+        aria-label="Nhóm cài đặt"
+        className="flex gap-1.5 overflow-x-auto scrollbar-none p-1.5 mb-5 bg-paper-warm border border-paper-line rounded-2xl"
+      >
+        {TABS.map(t => {
+          const Icon = t.icon;
+          const active = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(t.id)}
+              className={`chip flex items-center gap-1.5 shrink-0 ${active ? 'chip-active' : ''}`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* 1. THÔNG TIN TRƯỜNG LỚP */}
-      <div id="settings-class-info" className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-amber-200">
-        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-          <School className="w-5 h-5 text-amber-600" />
-          <span>1. Thông Tin Trường Lớp & Giáo Viên</span>
-        </h3>
+      {activeTab === 'class' && (
+        <Card id="settings-class-info" className="p-5 sm:p-7 animate-fade-in">
+          <SectionTitle icon={School} title="Thông Tin Trường Lớp & Giáo Viên" />
 
-        <form onSubmit={handleSaveConfig} className="space-y-4 text-xs sm:text-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Tên Trường</label>
-              <input
-                type="text"
-                value={formData.schoolName}
-                onChange={e => setFormData({ ...formData, schoolName: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Tên Lớp Học</label>
-              <input
-                type="text"
-                value={formData.className}
-                onChange={e => setFormData({ ...formData, className: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-amber-900"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Họ Tên Giáo Viên</label>
-              <input
-                type="text"
-                value={formData.teacherName}
-                onChange={e => setFormData({ ...formData, teacherName: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Chức Danh</label>
-              <input
-                type="text"
-                value={formData.teacherTitle}
-                onChange={e => setFormData({ ...formData, teacherTitle: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Niên Khóa</label>
-              <input
-                type="text"
-                value={formData.academicYear}
-                onChange={e => setFormData({ ...formData, academicYear: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Chủ Đề Thi Đua</label>
-            <input
-              type="text"
-              value={formData.topic}
-              onChange={e => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
-            />
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Khẩu Hiệu Lớp</label>
-            <input
-              type="text"
-              value={formData.classMotto}
-              onChange={e => setFormData({ ...formData, classMotto: e.target.value })}
-              className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-serif italic"
-            />
-          </div>
-
-          <div className="pt-2 flex items-center justify-between">
-            <button
-              type="submit"
-              className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>Lưu Thông Tin Lớp</span>
-            </button>
-
-            {saveSuccess && (
-              <span className="text-emerald-600 font-bold flex items-center gap-1 text-xs sm:text-sm animate-fadeIn">
-                <Check className="w-4 h-4" />
-                <span>Đã lưu thành công!</span>
-              </span>
-            )}
-          </div>
-        </form>
-      </div>
-
-      {/* 2. QUẢN LÝ ẢNH BÌA & BANNER LỚP HỌC (OFFLINE CACHE 2K) */}
-      <div id="settings-images-offline-management" className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-amber-200">
-        <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
-          <ImageIcon className="w-5 h-5 text-amber-600" />
-          <span>2. Quản Lý Ảnh Bìa & Banner Offline (Bộ 3 Banner 2K)</span>
-        </h3>
-        <p className="text-xs text-slate-500 mb-6">
-          Hệ thống lưu trữ độc lập 3 ảnh banner chất lượng cao (Trang chủ, Bảng vàng, Trò chơi) để ứng dụng có thể trình chiếu offline hoàn toàn mà không phụ thuộc vào internet.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 1. Home Banner Card */}
-          <div id="card-settings-home-banner" className="border-2 border-amber-300 rounded-2xl p-3 bg-amber-50/40 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs font-bold text-amber-950 mb-1.5">
-                <span>Trang Chủ Môn Sinh</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
+          <form onSubmit={handleSaveConfig} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Tên Trường</Label>
+                <input
+                  type="text"
+                  value={formData.schoolName}
+                  onChange={e => setFormData({ ...formData, schoolName: e.target.value })}
+                  className="input"
+                />
               </div>
-              <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
-                <img
-                  src={getAssetUrl(formData.homeBanner || "/banner-trang-nguyen.png")}
-                  alt="Home Banner"
-                  className="w-full h-full object-cover"
+              <div>
+                <Label>Tên Lớp Học</Label>
+                <input
+                  type="text"
+                  value={formData.className}
+                  onChange={e => setFormData({ ...formData, className: e.target.value })}
+                  className="input font-bold text-primary-900"
                 />
               </div>
             </div>
-            <label className="py-2 px-3 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
-              <Upload className="w-3.5 h-3.5" />
-              <span>Tải ảnh mới</span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label>Họ Tên Giáo Viên</Label>
+                <input
+                  type="text"
+                  value={formData.teacherName}
+                  onChange={e => setFormData({ ...formData, teacherName: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div>
+                <Label>Chức Danh</Label>
+                <input
+                  type="text"
+                  value={formData.teacherTitle}
+                  onChange={e => setFormData({ ...formData, teacherTitle: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div>
+                <Label>Niên Khóa</Label>
+                <input
+                  type="text"
+                  value={formData.academicYear}
+                  onChange={e => setFormData({ ...formData, academicYear: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Chủ Đề Thi Đua</Label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (evt) => {
-                    const result = evt.target?.result as string;
-                    setFormData({ ...formData, homeBanner: result });
-                    storage.saveConfig({ ...config, homeBanner: result });
-                    try { localStorage.setItem("offlineBannerData", result); } catch {}
-                    soundEngine.playPointGain();
-                    notify("Đã cập nhật banner trang chủ!");
-                  };
-                  reader.readAsDataURL(file);
-                }}
-                className="hidden"
+                type="text"
+                value={formData.topic}
+                onChange={e => setFormData({ ...formData, topic: e.target.value })}
+                className="input font-bold"
               />
-            </label>
-          </div>
+            </div>
 
-          {/* 2. Tam Khoi Banner Card */}
-          <div id="card-settings-tam-khoi-banner" className="border-2 border-amber-300 rounded-2xl p-3 bg-amber-50/40 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between text-xs font-bold text-amber-950 mb-1.5">
-                <span>Bảng Vàng Tam Khôi</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
-              </div>
-              <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
-                <img
-                  src={getAssetUrl("/banner-tam-khoi.png")}
-                  alt="Tam Khoi Banner"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <Label>Khẩu Hiệu Lớp</Label>
+              <input
+                type="text"
+                value={formData.classMotto}
+                onChange={e => setFormData({ ...formData, classMotto: e.target.value })}
+                className="input font-serif italic"
+              />
             </div>
-            <div className="py-2 px-3 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5">
-              <span>Độ phân giải: 2.62 MB</span>
-            </div>
-          </div>
 
-          {/* 3. Game Banner Card */}
-          <div id="card-settings-game-banner" className="border-2 border-amber-300 rounded-2xl p-3 bg-amber-50/40 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs font-bold text-amber-950 mb-1.5">
-                <span>Khoa Bảng Kỳ Thú</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
-              </div>
-              <div className="rounded-xl overflow-hidden border border-amber-200 bg-slate-900/5 h-28 flex items-center justify-center mb-3">
-                <img
-                  src={getAssetUrl("/banner-tro-choi.png")}
-                  alt="Game Banner"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <div className="pt-3 border-t border-paper-line flex flex-wrap items-center justify-between gap-3">
+              {saveSuccess ? (
+                <span className="text-emerald-700 font-bold flex items-center gap-1 text-xs sm:text-sm animate-fade-in">
+                  <Check className="w-4 h-4" />
+                  <span>Đã lưu thành công!</span>
+                </span>
+              ) : <span />}
+              <Button type="submit" variant="primary" icon={Save}>
+                Lưu Thông Tin Lớp
+              </Button>
             </div>
-            <div className="py-2 px-3 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5">
-              <span>Độ phân giải: 2.30 MB</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          </form>
+        </Card>
+      )}
 
-      {/* 3. CẤU HÌNH AI GEMINI */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-amber-200">
-        <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
-          <Key className="w-5 h-5 text-amber-600" />
-          <span>3. Cấu Hình Google Gemini AI API Key</span>
-        </h3>
-        <p className="text-xs text-slate-500 mb-4">
-          Tùy chọn: Nhập khóa API Google Gemini cá nhân (miễn phí từ Google AI Studio) để tạo nhận xét học sinh và sinh câu đố Trạng Tí không giới hạn. Nếu để trống, hệ thống sẽ sử dụng các mẫu câu thông minh tích hợp sẵn.
-        </p>
-
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="password"
-              placeholder="AIzaSy..."
-              value={formData.geminiApiKey || ''}
-              onChange={e => {
-                setFormData({ ...formData, geminiApiKey: e.target.value });
-                setTestKeyResult(null);
-              }}
-              className="flex-1 px-3.5 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+      {/* 2. QUẢN LÝ TIÊU CHÍ CHẤM ĐIỂM */}
+      {activeTab === 'criteria' && (
+        <div id="settings-criteria-management" className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in">
+          <Card className="p-5 sm:p-6 lg:col-span-3">
+            <SectionTitle
+              icon={Sparkles}
+              title={`Danh Sách Tiêu Chí Chấm Điểm (${criteria.length})`}
+              description={`${positiveCount} tiêu chí khen thưởng • ${criteria.length - positiveCount} tiêu chí nhắc nhở`}
             />
-            <button
-              type="button"
-              disabled={isTestingKey}
-              onClick={handleTestApiKey}
-              className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs sm:text-sm rounded-xl border border-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
-            >
-              {isTestingKey ? <Loader2 className="w-4 h-4 animate-spin text-amber-700" /> : <Sparkles className="w-4 h-4 text-amber-700" />}
-              <span>{isTestingKey ? 'Đang kiểm tra...' : 'Kiểm Tra Khóa AI'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setConfig(formData);
-                storage.saveConfig(formData);
-                soundEngine.playPointGain();
-                notify("Đã lưu Gemini API Key thành công!");
-              }}
-              className="px-5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all cursor-pointer"
-            >
-              Lưu Key
-            </button>
-          </div>
 
-          {testKeyResult && (
-            <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 animate-in fade-in ${
-              testKeyResult.success 
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-900' 
-                : 'bg-rose-50 border-rose-300 text-rose-900'
-            }`}>
-              {testKeyResult.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-              )}
-              <span>{testKeyResult.message}</span>
+            <div className="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
+              {criteria.map(crit => (
+                <div
+                  key={crit.id}
+                  className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-paper border border-paper-line text-xs sm:text-sm"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-2xl shrink-0">{crit.icon}</span>
+                    <div className="min-w-0">
+                      <div className="font-bold text-ink truncate">{crit.name}</div>
+                      <div className="text-xs text-ink-muted truncate">{crit.description}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`font-black px-2.5 py-1 rounded-xl text-xs ${
+                      crit.points > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-100 text-primary-800'
+                    }`}>
+                      {crit.points > 0 ? `+${crit.points}` : crit.points} đ
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCriterion(crit.id)}
+                      className="p-1.5 text-ink-muted hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all cursor-pointer"
+                      title="Xóa tiêu chí"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </div>
+          </Card>
 
-      {/* 4. QUẢN LÝ TIÊU CHÍ CHẤM ĐIỂM */}
-      <div id="settings-criteria-management" className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-amber-200">
-        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-600" />
-          <span>4. Danh Sách Tiêu Chí Chấm Điểm ({criteria.length})</span>
-        </h3>
-
-        {/* Existing criteria list */}
-        <div className="space-y-2 mb-6 max-h-72 overflow-y-auto pr-1">
-          {criteria.map(crit => (
-            <div
-              key={crit.id}
-              className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">{crit.icon}</span>
+          <Card className="p-5 sm:p-6 lg:col-span-2 self-start">
+            <form onSubmit={handleAddCriterion} className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wide text-primary-800">Thêm Tiêu Chí Mới</h4>
+              <div>
+                <Label>Tên Tiêu Chí</Label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Tham gia văn nghệ lớp"
+                  value={newCrit.name}
+                  onChange={e => setNewCrit({ ...newCrit, name: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="font-bold text-slate-800">{crit.name}</div>
-                  <div className="text-xs text-slate-400">{crit.description}</div>
+                  <Label>Loại</Label>
+                  <select
+                    value={newCrit.category}
+                    onChange={e => setNewCrit({ ...newCrit, category: e.target.value as any })}
+                    className="input"
+                  >
+                    <option value="positive">Khen thưởng (+)</option>
+                    <option value="reminder">Nhắc nhở (-)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Điểm (+ hoặc -)</Label>
+                  <input
+                    type="number"
+                    value={newCrit.points}
+                    onChange={e => setNewCrit({ ...newCrit, points: Number(e.target.value) })}
+                    className="input font-bold"
+                  />
                 </div>
               </div>
+              <div>
+                <Label>Mô tả</Label>
+                <input
+                  type="text"
+                  placeholder="Mô tả tiêu chí..."
+                  value={newCrit.description}
+                  onChange={e => setNewCrit({ ...newCrit, description: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <Button type="submit" variant="success" className="w-full">
+                Thêm Tiêu Chí
+              </Button>
+            </form>
+          </Card>
+        </div>
+      )}
 
-              <div className="flex items-center gap-3">
-                <span className={`font-black px-2.5 py-1 rounded-xl text-xs ${
-                  crit.points > 0 ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'
-                }`}>
-                  {crit.points > 0 ? `+${crit.points}` : crit.points} đ
-                </span>
-                <button
-                  onClick={() => handleDeleteCriterion(crit.id)}
-                  className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-all"
-                  title="Xóa tiêu chí"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+      {/* 3. QUẢN LÝ ẢNH BÌA & BANNER LỚP HỌC (OFFLINE CACHE 2K) */}
+      {activeTab === 'appearance' && (
+        <Card id="settings-images-offline-management" className="p-5 sm:p-7 animate-fade-in">
+          <SectionTitle
+            icon={ImageIcon}
+            title="Quản Lý Ảnh Bìa & Banner Offline (Bộ 3 Banner 2K)"
+            description="Hệ thống lưu trữ độc lập 3 ảnh banner chất lượng cao (Trang chủ, Bảng vàng, Trò chơi) để ứng dụng có thể trình chiếu offline hoàn toàn mà không phụ thuộc vào internet."
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Home Banner Card */}
+            <div id="card-settings-home-banner" className="rounded-2xl p-3 bg-paper-warm border border-paper-line flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs font-bold text-ink mb-2">
+                  <span>Trang Chủ Môn Sinh</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-paper-line bg-white h-28 flex items-center justify-center mb-3">
+                  <img
+                    src={getAssetUrl(formData.homeBanner || "/banner-trang-nguyen.png")}
+                    alt="Home Banner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <label className="py-2 px-3 bg-gold-100 hover:bg-gold-200 text-gold-900 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Tải ảnh mới</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleHomeBannerUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Tam Khoi Banner Card */}
+            <div id="card-settings-tam-khoi-banner" className="rounded-2xl p-3 bg-paper-warm border border-paper-line flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs font-bold text-ink mb-2">
+                  <span>Bảng Vàng Tam Khôi</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-paper-line bg-white h-28 flex items-center justify-center mb-3">
+                  <img
+                    src={getAssetUrl("/banner-tam-khoi.png")}
+                    alt="Tam Khoi Banner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <div className="py-2 px-3 bg-white border border-paper-line text-ink-soft text-xs font-bold rounded-xl flex items-center justify-center gap-1.5">
+                <span>Độ phân giải: 2.62 MB</span>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Add new criterion form */}
-        <form onSubmit={handleAddCriterion} className="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
-          <h4 className="text-xs font-bold uppercase text-amber-900">Thêm Tiêu Chí Mới</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-            <div className="sm:col-span-2">
-              <label className="block font-bold text-slate-700 mb-1">Tên Tiêu Chí</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Tham gia văn nghệ lớp"
-                value={newCrit.name}
-                onChange={e => setNewCrit({ ...newCrit, name: e.target.value })}
-                className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg focus:outline-none"
-              />
+            {/* Game Banner Card */}
+            <div id="card-settings-game-banner" className="rounded-2xl p-3 bg-paper-warm border border-paper-line flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs font-bold text-ink mb-2">
+                  <span>Khoa Bảng Kỳ Thú</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">Offline 2K</span>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-paper-line bg-white h-28 flex items-center justify-center mb-3">
+                  <img
+                    src={getAssetUrl("/banner-tro-choi.png")}
+                    alt="Game Banner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <div className="py-2 px-3 bg-white border border-paper-line text-ink-soft text-xs font-bold rounded-xl flex items-center justify-center gap-1.5">
+                <span>Độ phân giải: 2.30 MB</span>
+              </div>
             </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Loại</label>
-              <select
-                value={newCrit.category}
-                onChange={e => setNewCrit({ ...newCrit, category: e.target.value as any })}
-                className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg focus:outline-none"
+          </div>
+        </Card>
+      )}
+
+      {/* 4. SAO LƯU & KHÔI PHỤC DỮ LIỆU */}
+      {activeTab === 'data' && (
+        <div id="settings-backup-danger" className="space-y-4 animate-fade-in">
+          <Card className="p-5 sm:p-7">
+            <SectionTitle
+              icon={Download}
+              title="Sao Lưu & Khôi Phục Dữ Liệu Lớp Học"
+              description="Lưu trữ toàn bộ danh sách học sinh, điểm số, bài tập và cài đặt thành tệp JSON an toàn trên máy tính của bạn."
+            />
+            <div className="flex flex-wrap gap-2.5">
+              <Button variant="success" icon={Download} onClick={handleExportJSON}>
+                Xuất Sao Lưu Tệp JSON
+              </Button>
+              <label className="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-bold rounded-xl bg-white border border-paper-line hover:border-gold-400 text-ink-soft hover:text-ink cursor-pointer transition-all active:scale-[0.97]">
+                <Upload className="w-4 h-4" />
+                <span>Khôi Phục Từ Tệp JSON</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportJSON}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </Card>
+
+          {/* Vùng nguy hiểm */}
+          <div className="rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/60 p-5 sm:p-7">
+            <h3 className="text-base sm:text-lg font-black font-serif text-primary-800 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Vùng nguy hiểm</span>
+            </h3>
+            <p className="text-xs text-primary-900/70 mt-1 mb-4">
+              Các thao tác dưới đây thay đổi hoặc xóa dữ liệu lớp học và không thể hoàn tác. Hãy xuất sao lưu trước khi thực hiện.
+            </p>
+
+            <div className="divide-y divide-primary-100 rounded-xl bg-white border border-primary-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-ink">Đặt lại điểm về 0</div>
+                  <div className="text-xs text-ink-muted">Khởi đầu đợt thi đua mới, giữ nguyên danh sách học sinh.</div>
+                </div>
+                <Button variant="outline" icon={RotateCcw} onClick={handleResetPointsOnly} className="shrink-0">
+                  Đặt Lại Điểm Về 0
+                </Button>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-ink">Nạp học sinh mẫu</div>
+                  <div className="text-xs text-ink-muted">Thay danh sách hiện tại bằng 32 học sinh mẫu chia đều 4 tổ.</div>
+                </div>
+                <Button variant="gold" icon={Sparkles} onClick={handleLoadSamples} className="shrink-0">
+                  Nạp 32 Học Sinh Mẫu
+                </Button>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-ink">Xóa trắng học sinh</div>
+                  <div className="text-xs text-ink-muted">Xóa toàn bộ danh sách để bắt đầu thêm lớp mới.</div>
+                </div>
+                <Button variant="danger" icon={Trash2} onClick={handleClearStudents} className="shrink-0">
+                  Xóa Trắng Học Sinh (Lớp Mới)
+                </Button>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-ink">Reset về mặc định</div>
+                  <div className="text-xs text-ink-muted">Đặt lại toàn bộ dữ liệu (học sinh, điểm số, bài tập) về ban đầu.</div>
+                </div>
+                <Button variant="danger" icon={AlertTriangle} onClick={handleResetToDefault} className="shrink-0">
+                  Reset Về Mặc Định Ban Đầu
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. CẤU HÌNH AI GEMINI */}
+      {activeTab === 'ai' && (
+        <Card id="settings-ai-config" className="p-5 sm:p-7 animate-fade-in">
+          <SectionTitle
+            icon={Key}
+            title="Cấu Hình Google Gemini AI API Key"
+            description="Tùy chọn: Nhập khóa API Google Gemini cá nhân (miễn phí từ Google AI Studio) để tạo nhận xét học sinh và sinh câu đố Trạng Tí không giới hạn. Nếu để trống, hệ thống sẽ sử dụng các mẫu câu thông minh tích hợp sẵn."
+          />
+
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={formData.geminiApiKey || ''}
+                onChange={e => {
+                  setFormData({ ...formData, geminiApiKey: e.target.value });
+                  setTestKeyResult(null);
+                }}
+                className="input flex-1 font-mono"
+              />
+              <Button
+                variant="outline"
+                disabled={isTestingKey}
+                onClick={handleTestApiKey}
+                className="shrink-0"
               >
-                <option value="positive">Khen thưởng (+)</option>
-                <option value="reminder">Nhắc nhở (-)</option>
-              </select>
+                {isTestingKey ? <Loader2 className="w-4 h-4 animate-spin text-gold-700" /> : <Sparkles className="w-4 h-4 text-gold-700" />}
+                <span>{isTestingKey ? 'Đang kiểm tra...' : 'Kiểm Tra Khóa AI'}</span>
+              </Button>
+              <Button
+                variant="primary"
+                icon={Save}
+                className="shrink-0"
+                onClick={() => {
+                  setConfig(formData);
+                  storage.saveConfig(formData);
+                  soundEngine.playPointGain();
+                  notify("Đã lưu Gemini API Key thành công!");
+                }}
+              >
+                Lưu Key
+              </Button>
             </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Điểm (+ hoặc -)</label>
-              <input
-                type="number"
-                value={newCrit.points}
-                onChange={e => setNewCrit({ ...newCrit, points: Number(e.target.value) })}
-                className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg focus:outline-none font-bold"
-              />
-            </div>
+
+            {testKeyResult && (
+              <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 animate-fade-in ${
+                testKeyResult.success
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : 'bg-primary-50 border-primary-200 text-primary-800'
+              }`}>
+                {testKeyResult.success ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-primary-600 shrink-0" />
+                )}
+                <span>{testKeyResult.message}</span>
+              </div>
+            )}
           </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Mô tả tiêu chí..."
-              value={newCrit.description}
-              onChange={e => setNewCrit({ ...newCrit, description: e.target.value })}
-              className="flex-1 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow transition-all"
-            >
-              Thêm Tiêu Chí
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* 5. SAO LƯU & KHÔI PHỤC DỮ LIỆU */}
-      <div id="settings-backup-danger" className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-amber-200">
-        <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
-          <Download className="w-5 h-5 text-amber-600" />
-          <span>5. Sao Lưu & Khôi Phục Dữ Liệu Lớp Học</span>
-        </h3>
-        <p className="text-xs text-slate-500 mb-5">
-          Lưu trữ toàn bộ danh sách học sinh, điểm số, bài tập và cài đặt thành tệp JSON an toàn trên máy tính của bạn.
-        </p>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleExportJSON}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all"
-          >
-            <Download className="w-4 h-4" />
-            <span>Xuất Sao Lưu Tệp JSON</span>
-          </button>
-
-          <label className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow cursor-pointer transition-all">
-            <Upload className="w-4 h-4" />
-            <span>Khôi Phục Từ Tệp JSON</span>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportJSON}
-              className="hidden"
-            />
-          </label>
-
-          <button
-            onClick={handleResetPointsOnly}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Đặt Lại Điểm Về 0</span>
-          </button>
-
-          <button
-            onClick={async () => {
-              if (await confirmDialog("Thao tác này sẽ nạp 32 học sinh mẫu chia đều 4 tổ để thử nghiệm. Bạn có chắc chắn không?")) {
-                const samples = storage.loadSampleStudents();
-                setStudents(samples);
-                notify("Đã nạp 32 học sinh mẫu thành công!");
-              }
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-amber-950 border border-amber-400 font-bold text-xs sm:text-sm rounded-xl shadow transition-all cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Nạp 32 Học Sinh Mẫu</span>
-          </button>
-
-          <button
-            onClick={async () => {
-              if (await confirmDialog("Bạn có chắc chắn muốn xóa toàn bộ danh sách học sinh để bắt đầu thêm lớp mới?")) {
-                setStudents([]);
-                storage.saveStudents([]);
-                notify("Đã xóa danh sách học sinh!");
-              }
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Xóa Trắng Học Sinh (Lớp Mới)</span>
-          </button>
-
-          <button
-            onClick={handleResetToDefault}
-            className="flex items-center gap-2 px-5 py-2.5 bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            <span>Reset Về Mặc Định Ban Đầu</span>
-          </button>
-        </div>
-      </div>
+        </Card>
+      )}
     </div>
   );
 };

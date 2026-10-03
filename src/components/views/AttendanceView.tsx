@@ -1,25 +1,74 @@
 import React, { useState } from 'react';
-import { 
-  Check, 
-  Clock, 
-  FileText, 
-  AlertCircle, 
-  CheckCheck, 
-  Calendar, 
-  Sparkles,
-  Users
+import {
+  Check,
+  Clock,
+  FileText,
+  AlertCircle,
+  CheckCheck,
+  Calendar,
+  ClipboardCheck,
+  Percent
 } from 'lucide-react';
 import { Student, AttendanceDay, AttendanceStatus } from '../../types';
 import { soundEngine } from '../../utils/soundEngine';
 import { storage } from '../../utils/storage';
-import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { getAssetUrl } from '../../utils/assets';
+import { ChibiAvatar } from '../ChibiAvatar';
+import { Button, PageHeader, StatTile, EmptyState } from '../ui';
 
 interface AttendanceViewProps {
   students: Student[];
   attendance: AttendanceDay[];
   setAttendance: React.Dispatch<React.SetStateAction<AttendanceDay[]>>;
 }
+
+/** Thứ tự xoay vòng khi chạm vào thẻ học sinh */
+const STATUS_CYCLE: AttendanceStatus[] = ['present', 'late', 'excused', 'unexcused'];
+
+const STATUS_META: Record<
+  AttendanceStatus,
+  {
+    label: string;
+    short: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tile: string;
+    badge: string;
+    dot: string;
+  }
+> = {
+  present: {
+    label: 'Có mặt',
+    short: 'Có mặt',
+    icon: Check,
+    tile: 'border-emerald-300 bg-emerald-50/40',
+    badge: 'bg-emerald-600 text-white',
+    dot: 'bg-emerald-500'
+  },
+  late: {
+    label: 'Đi trễ',
+    short: 'Đi trễ',
+    icon: Clock,
+    tile: 'border-gold-400 bg-gold-50/60',
+    badge: 'bg-gold-500 text-primary-950',
+    dot: 'bg-gold-500'
+  },
+  excused: {
+    label: 'Nghỉ có phép',
+    short: 'Có phép',
+    icon: FileText,
+    tile: 'border-sky-300 bg-sky-50/50',
+    badge: 'bg-sky-600 text-white',
+    dot: 'bg-sky-500'
+  },
+  unexcused: {
+    label: 'Nghỉ không phép',
+    short: 'K.Phép',
+    icon: AlertCircle,
+    tile: 'border-primary-400 bg-primary-50/60',
+    badge: 'bg-primary-700 text-white',
+    dot: 'bg-primary-600'
+  }
+};
 
 export const AttendanceView: React.FC<AttendanceViewProps> = ({
   students,
@@ -56,6 +105,14 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
     storage.saveAttendance(newAttendance);
   };
 
+  // Chạm 1 lần để xoay vòng trạng thái
+  const cycleStudentStatus = (studentId: string) => {
+    const current = getStudentStatus(studentId);
+    const idx = STATUS_CYCLE.indexOf(current);
+    const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+    setStudentStatus(studentId, next);
+  };
+
   // Điểm danh nhanh cả lớp có mặt
   const handleMarkAllPresent = () => {
     soundEngine.playAttendanceTing();
@@ -82,154 +139,144 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   const attendanceRate = total > 0 ? Math.round(((presentCount + lateCount) / total) * 100) : 100;
 
   return (
-    <div className="space-y-6">
-      {/* Top Header Controls */}
-      <div className="bg-white/80 backdrop-blur rounded-2xl p-4 sm:p-5 shadow-md border border-amber-200 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-300 font-bold text-amber-900 text-sm">
-            <Calendar className="w-4 h-4 text-amber-600" />
-            <span>Ngày điểm danh:</span>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-              className="bg-white border border-amber-300 px-2 py-0.5 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold cursor-pointer"
-            />
-          </div>
+    <div className="space-y-5">
+      <PageHeader
+        icon={ClipboardCheck}
+        title="Điểm Danh Chuyên Cần"
+        subtitle="Chạm vào thẻ học sinh để đổi trạng thái: Có mặt → Đi trễ → Có phép → Không phép"
+        actions={
+          <>
+            <label className="flex items-center gap-2 card px-3 py-1.5 text-sm font-bold text-ink-soft cursor-pointer">
+              <Calendar className="w-4 h-4 text-primary-700" />
+              <span className="hidden sm:inline">Ngày điểm danh:</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="bg-transparent text-ink text-sm font-semibold focus:outline-none cursor-pointer"
+              />
+            </label>
+            <Button variant="success" icon={CheckCheck} onClick={handleMarkAllPresent}>
+              Điểm Danh Nhanh Cả Lớp (Có Mặt)
+            </Button>
+          </>
+        }
+      />
 
-          <button
-            onClick={handleMarkAllPresent}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md border border-emerald-400 transition-all active:scale-95"
-          >
-            <CheckCheck className="w-4 h-4" />
-            <span>Điểm Danh Nhanh Cả Lớp (Có Mặt)</span>
-          </button>
-        </div>
-
-        {/* Stats Strip */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-bold">
-          <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Có mặt: {presentCount}</span>
-          </div>
-          <div className="bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>Đi trễ: {lateCount}</span>
-          </div>
-          <div className="bg-blue-50 text-blue-800 border border-blue-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Có phép: {excusedCount}</span>
-          </div>
-          <div className="bg-rose-50 text-rose-800 border border-rose-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span>K.Phép: {unexcusedCount}</span>
-          </div>
-          <div className="bg-amber-100 text-amber-950 border border-amber-300 px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm">
-            Tỉ lệ: {attendanceRate}%
-          </div>
-        </div>
-      </div>
-
-      {/* Attendance Student Cards Grid or Empty State */}
-      {students.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border-2 border-dashed border-amber-300 text-center max-w-2xl mx-auto my-6">
-          <img 
-            src={getAssetUrl("/assets/images/empty-classroom.jpg")} 
-            alt="Lớp học trống" 
-            className="w-64 h-48 sm:w-80 sm:h-56 object-cover rounded-2xl shadow-md border-4 border-amber-300 mx-auto mb-6"
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <StatTile label="Có mặt" value={presentCount} icon={Check} tone="success" hint={`/${total} học sinh`} />
+        <StatTile label="Đi trễ" value={lateCount} icon={Clock} tone="gold" />
+        <StatTile label="Vắng có phép" value={excusedCount} icon={FileText} tone="neutral" />
+        <StatTile label="Vắng không phép" value={unexcusedCount} icon={AlertCircle} tone="danger" />
+        <div className="col-span-2 sm:col-span-1">
+          <StatTile
+            label="Tỉ lệ chuyên cần"
+            value={`${attendanceRate}%`}
+            icon={Percent}
+            tone="primary"
+            hint={
+              <span className="block h-1.5 w-full mt-1 rounded-full bg-paper-warm overflow-hidden">
+                <span
+                  className="block h-full rounded-full bg-gradient-to-r from-gold-400 to-primary-600 transition-all duration-500"
+                  style={{ width: `${attendanceRate}%` }}
+                />
+              </span>
+            }
           />
-          <h3 className="text-2xl font-black text-slate-800 font-serif mb-2">
-            Chưa Có Môn Sinh Để Điểm Danh
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-            Thầy/Cô hãy thêm danh sách học sinh vào lớp học trước khi thực hiện điểm danh chuyên cần hằng ngày!
-          </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-          {students.map(student => {
-            const status = getStudentStatus(student.id);
-            const avatarInfo = AVATAR_OPTIONS.find(a => a.id === student.avatar) || AVATAR_OPTIONS[0];
-
-            return (
-              <div
-                key={student.id}
-              className={`bg-white rounded-2xl p-3.5 border-2 transition-all shadow-sm hover:shadow-md flex flex-col justify-between ${
-                status === 'present'
-                  ? 'border-emerald-300 bg-emerald-50/20'
-                  : status === 'late'
-                  ? 'border-amber-400 bg-amber-50/30'
-                  : status === 'excused'
-                  ? 'border-blue-300 bg-blue-50/20'
-                  : 'border-rose-400 bg-rose-50/30'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="text-2xl shrink-0">{avatarInfo.emoji}</span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-slate-900 text-sm truncate">{student.name}</h4>
-                  <div className="text-[11px] text-slate-400 truncate">{student.role}</div>
-                </div>
-              </div>
-
-              {/* 4 Status Buttons */}
-              <div className="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100 text-[11px] font-bold">
-                <button
-                  onClick={() => setStudentStatus(student.id, 'present')}
-                  className={`py-1.5 rounded-lg flex flex-col items-center justify-center transition-all ${
-                    status === 'present'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                  }`}
-                  title="Có mặt"
-                >
-                  <Check className="w-3.5 h-3.5 mb-0.5" />
-                  <span>Có mặt</span>
-                </button>
-
-                <button
-                  onClick={() => setStudentStatus(student.id, 'late')}
-                  className={`py-1.5 rounded-lg flex flex-col items-center justify-center transition-all ${
-                    status === 'late'
-                      ? 'bg-amber-500 text-white shadow-sm'
-                      : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-                  }`}
-                  title="Đi trễ"
-                >
-                  <Clock className="w-3.5 h-3.5 mb-0.5" />
-                  <span>Đi trễ</span>
-                </button>
-
-                <button
-                  onClick={() => setStudentStatus(student.id, 'excused')}
-                  className={`py-1.5 rounded-lg flex flex-col items-center justify-center transition-all ${
-                    status === 'excused'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
-                  }`}
-                  title="Nghỉ có phép"
-                >
-                  <FileText className="w-3.5 h-3.5 mb-0.5" />
-                  <span>Có phép</span>
-                </button>
-
-                <button
-                  onClick={() => setStudentStatus(student.id, 'unexcused')}
-                  className={`py-1.5 rounded-lg flex flex-col items-center justify-center transition-all ${
-                    status === 'unexcused'
-                      ? 'bg-rose-600 text-white shadow-sm'
-                      : 'bg-rose-50 text-rose-800 hover:bg-rose-100'
-                  }`}
-                  title="Nghỉ không phép"
-                >
-                  <AlertCircle className="w-3.5 h-3.5 mb-0.5" />
-                  <span>K.Phép</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
       </div>
+
+      {/* Attendance Student Tiles Grid or Empty State */}
+      {students.length === 0 ? (
+        <EmptyState
+          image={getAssetUrl('/assets/images/empty-classroom.jpg')}
+          title="Chưa Có Môn Sinh Để Điểm Danh"
+          description="Thầy/Cô hãy thêm danh sách học sinh vào lớp học trước khi thực hiện điểm danh chuyên cần hằng ngày!"
+        />
+      ) : (
+        <>
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-ink-soft">
+            {STATUS_CYCLE.map(st => (
+              <span key={st} className="chip flex items-center gap-1.5 cursor-default">
+                <span className={`w-2 h-2 rounded-full ${STATUS_META[st].dot}`} />
+                {STATUS_META[st].label}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {students.map(student => {
+              const status = getStudentStatus(student.id);
+              const meta = STATUS_META[status];
+              const StatusIcon = meta.icon;
+
+              return (
+                <div
+                  key={student.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => cycleStudentStatus(student.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      cycleStudentStatus(student.id);
+                    }
+                  }}
+                  title={`${student.name} — ${meta.label} (chạm để đổi)`}
+                  className={`relative rounded-2xl border-2 p-3 pt-4 flex flex-col items-center text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer select-none active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 ${meta.tile}`}
+                >
+                  <span
+                    className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${meta.badge}`}
+                  >
+                    <StatusIcon className="w-3.5 h-3.5" />
+                  </span>
+
+                  <ChibiAvatar
+                    points={student.points}
+                    gender={student.gender}
+                    size="sm"
+                    customPhotoUrl={student.customPhotoUrl}
+                  />
+                  <div className="mt-1.5 w-full text-[13px] font-bold text-ink truncate" title={student.name}>
+                    {student.name}
+                  </div>
+                  <div className="text-[10px] text-ink-muted truncate w-full">{student.role}</div>
+
+                  <span className={`mt-2 px-2 py-0.5 rounded-full text-[11px] font-black ${meta.badge}`}>
+                    {meta.short}
+                  </span>
+
+                  {/* Chọn trực tiếp trạng thái */}
+                  <div
+                    className="mt-2 pt-2 w-full border-t border-paper-line/80 grid grid-cols-4 gap-1"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {STATUS_CYCLE.map(st => {
+                      const m = STATUS_META[st];
+                      const Ic = m.icon;
+                      const active = st === status;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setStudentStatus(student.id, st)}
+                          title={m.label}
+                          className={`h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                            active ? `${m.badge} shadow-sm` : 'bg-white/80 text-ink-muted hover:bg-white hover:text-ink'
+                          }`}
+                        >
+                          <Ic className="w-3.5 h-3.5" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

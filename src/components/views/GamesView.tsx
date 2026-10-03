@@ -5,24 +5,17 @@ import {
   UserCheck, 
   HelpCircle, 
   Sparkles, 
-  Trophy, 
-  Volume2, 
-  Flame, 
-  Clock, 
   RefreshCw,
-  Gift,
-  CheckCircle2,
-  Award,
   Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Student, ClassConfig, PointLog } from '../../types';
 import { soundEngine } from '../../utils/soundEngine';
 import { storage } from '../../utils/storage';
-import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { AI_SERVICE } from '../../utils/gemini';
 import { GameBannerEditorModal, GameBannerConfig } from '../modals/GameBannerEditorModal';
 import { getAssetUrl } from '../../utils/assets';
+import { PageHeader, Button } from '../ui';
 
 interface GamesViewProps {
   students: Student[];
@@ -32,6 +25,20 @@ interface GamesViewProps {
   setPointLogs: React.Dispatch<React.SetStateAction<PointLog[]>>;
 }
 
+type GameKey = 'wheel' | 'picker' | 'riddles';
+
+const GAME_TABS: {
+  key: GameKey;
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}[] = [
+  { key: 'wheel', id: 'btn-tab-wheel-hero', icon: RotateCw, title: 'Vòng Quay Khoa Bảng', desc: 'Quay thưởng hoa điểm, quà may mắn' },
+  { key: 'picker', id: 'btn-tab-decree-hero', icon: UserCheck, title: 'Chiếu Chỉ Gọi Tên', desc: 'Bốc thăm gọi môn sinh lên bảng' },
+  { key: 'riddles', id: 'btn-tab-cards-hero', icon: HelpCircle, title: 'Đố Vui Trí Tuệ (AI)', desc: 'Câu đố dân gian do AI gợi ý' },
+];
+
 export const GamesView: React.FC<GamesViewProps> = ({
   students,
   setStudents,
@@ -39,7 +46,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
   pointLogs,
   setPointLogs
 }) => {
-  const [activeGame, setActiveGame] = useState<'wheel' | 'picker' | 'riddles'>('wheel');
+  const [activeGame, setActiveGame] = useState<GameKey>('wheel');
   const [isBannerEditorOpen, setIsBannerEditorOpen] = useState<boolean>(false);
   const [bannerConfig, setBannerConfig] = useState<GameBannerConfig>(() => {
     try {
@@ -92,16 +99,22 @@ export const GamesView: React.FC<GamesViewProps> = ({
   const [wheelResult, setWheelResult] = useState<string | null>(null);
   const [selectedStudentForReward, setSelectedStudentForReward] = useState<string>(students[0]?.id || '');
 
+  // Màu ô vòng quay (canvas cần mã màu cụ thể)
   const wheelSlices = [
-    { text: "+1 Điểm", color: "#f59e0b", points: 1 },
-    { text: "Tràng Pháo Tay", color: "#ef4444", points: 0 },
-    { text: "+2 Điểm", color: "#10b981", points: 2 },
-    { text: "Quà Nhỏ", color: "#3b82f6", points: 0 },
-    { text: "+5 Điểm", color: "#8b5cf6", points: 5 },
-    { text: "Thêm Lượt", color: "#ec4899", points: 0 },
-    { text: "+3 Điểm", color: "#f97316", points: 3 },
-    { text: "Đố Vui", color: "#14b8a6", points: 0 },
+    { text: "+1 Điểm", color: "#F59E0B", points: 1 },
+    { text: "Tràng Pháo Tay", color: "#A82820", points: 0 },
+    { text: "+2 Điểm", color: "#059669", points: 2 },
+    { text: "Quà Nhỏ", color: "#2563EB", points: 0 },
+    { text: "+5 Điểm", color: "#7C3AED", points: 5 },
+    { text: "Thêm Lượt", color: "#DB2777", points: 0 },
+    { text: "+3 Điểm", color: "#D97706", points: 3 },
+    { text: "Đố Vui", color: "#0D9488", points: 0 },
   ];
+
+  // Token màu cho tâm vòng quay: primary-900 / gold-300 / gold-100
+  const WHEEL_CENTER_FILL = '#5B0E0E';
+  const WHEEL_CENTER_STROKE = '#FCD34D';
+  const WHEEL_CENTER_TEXT = '#FEF3C7';
 
   const currentRotation = useRef<number>(0);
 
@@ -149,13 +162,13 @@ export const GamesView: React.FC<GamesViewProps> = ({
     // Center circle
     ctx.beginPath();
     ctx.arc(centerX, centerY, 28, 0, 2 * Math.PI);
-    ctx.fillStyle = '#78350f';
+    ctx.fillStyle = WHEEL_CENTER_FILL;
     ctx.fill();
-    ctx.strokeStyle = '#fde68a';
+    ctx.strokeStyle = WHEEL_CENTER_STROKE;
     ctx.lineWidth = 4;
     ctx.stroke();
 
-    ctx.fillStyle = '#fef3c7';
+    ctx.fillStyle = WHEEL_CENTER_TEXT;
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -234,12 +247,12 @@ export const GamesView: React.FC<GamesViewProps> = ({
       // Center
       ctx.beginPath();
       ctx.arc(centerX, centerY, 28, 0, 2 * Math.PI);
-      ctx.fillStyle = '#78350f';
+      ctx.fillStyle = WHEEL_CENTER_FILL;
       ctx.fill();
-      ctx.strokeStyle = '#fde68a';
+      ctx.strokeStyle = WHEEL_CENTER_STROKE;
       ctx.lineWidth = 4;
       ctx.stroke();
-      ctx.fillStyle = '#fef3c7';
+      ctx.fillStyle = WHEEL_CENTER_TEXT;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -334,26 +347,34 @@ export const GamesView: React.FC<GamesViewProps> = ({
     soundEngine.playPointGain();
   };
 
+  // Giữ tham chiếu props không dùng trực tiếp (tương thích interface)
+  void pointLogs;
+  void setPointLogs;
+
+  const sectionBadge = 'inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gold-800 bg-gold-100 px-3 py-1 rounded-full';
+
   return (
-    <div id="game-zone-section" className="space-y-6 select-none">
-      {/* 2K AUTHENTIC HERO GAME BANNER */}
+    <div id="game-zone-section" className="space-y-4 sm:space-y-5 select-none">
+      <PageHeader
+        icon={Gamepad2}
+        title="Trò chơi lớp học"
+        subtitle="Vòng quay khoa bảng, Chiếu Chỉ gọi tên và Đố vui trí tuệ cho giờ học thêm hào hứng"
+      />
+
+      {/* HERO GAME BANNER */}
       <div
         id="hero-game-banner-top"
-        className="relative group rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl border-3 md:border-4 border-amber-400 bg-[#451a03] text-white p-5 sm:p-7 md:p-8 transition-all duration-300"
-        style={{
-          boxShadow: "0 10px 30px -5px rgba(120, 53, 15, 0.3), 0 0 15px 1px rgba(245, 158, 11, 0.2)"
-        }}
+        className="relative group rounded-3xl overflow-hidden shadow-card border border-gold-300/70 bg-primary-950 text-white p-5 sm:p-7 md:p-8"
       >
         {/* Layer 1: Background image */}
         <div
           id="banner-layer-1-bg"
-          className="absolute inset-0 transition-transform duration-500 ease-out"
+          className="absolute inset-0 transition-transform duration-500 ease-out bg-primary-950"
           style={{
             backgroundImage: `url('${getAssetUrl(bannerConfig.bannerUrl || '/banner-tro-choi.png')}')`,
             backgroundPosition: bannerConfig.position === 'left' ? 'left center' : bannerConfig.position === 'right' ? 'right center' : 'center center',
             backgroundSize: bannerConfig.fit === 'cover' ? `${bannerConfig.zoom}%` : 'contain',
-            backgroundRepeat: "no-repeat",
-            backgroundColor: "#4a1506"
+            backgroundRepeat: "no-repeat"
           }}
         />
 
@@ -362,204 +383,183 @@ export const GamesView: React.FC<GamesViewProps> = ({
           id="btn-edit-game-banner-top"
           type="button"
           onClick={() => setIsBannerEditorOpen(true)}
-          className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer bg-amber-400 hover:bg-yellow-300 active:scale-95 text-amber-950 border border-yellow-200 shadow-lg ring-2 ring-amber-300 hover:scale-105"
+          className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer bg-white/90 hover:bg-white text-primary-900 border border-gold-300 shadow-sm active:scale-95"
           title="Đổi ảnh nền / Tùy chỉnh Banner Trò chơi"
         >
-          <ImageIcon className="w-4 h-4 text-amber-950" />
-          <span>📷 Thay Banner</span>
+          <ImageIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">Thay Banner</span>
         </button>
 
         {/* Layer 2: Gradient Overlay */}
         <div
           id="banner-layer-2-overlay"
-          className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-          style={{
-            background: "linear-gradient(to right, rgba(75, 20, 8, 0.88) 0%, rgba(75, 20, 8, 0.72) 45%, rgba(60, 20, 10, 0.4) 75%, rgba(10, 70, 60, 0.2) 100%)"
-          }}
+          className="absolute inset-0 pointer-events-none bg-gradient-to-r from-primary-950/90 via-primary-900/70 to-primary-900/10"
         />
 
-        {/* Decorative elements & golden corners */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#FDE68A_1px,transparent_1px)] [background-size:18px_18px]" />
-          <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-amber-300/90 rounded-tl-sm" />
-          <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-amber-300/90 rounded-tr-sm" />
-          <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-amber-300/90 rounded-bl-sm" />
-          <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-amber-300/90 rounded-br-sm" />
-        </div>
-
         {/* Banner content */}
-        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div className="space-y-3.5 text-center lg:text-left max-w-2xl">
-            <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 text-amber-950 text-xs font-black shadow-md uppercase tracking-wider">
-                <Gamepad2 className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
-                <span>ĐẤU TRƯỜNG THI ĐUA</span>
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-teal-900/70 border border-teal-300/50 text-teal-100 text-xs font-bold backdrop-blur-xs shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>3 TRÒ CHƠI DÂN GIAN</span>
-              </span>
-            </div>
+        <div className="relative z-10 max-w-2xl space-y-3 text-center lg:text-left">
+          <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-400 text-primary-950 text-[11px] font-black uppercase tracking-wider shadow-sm">
+              <Gamepad2 className="w-3.5 h-3.5" />
+              Đấu trường thi đua
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-gold-100 text-[11px] font-bold backdrop-blur-sm">
+              <Sparkles className="w-3.5 h-3.5 text-gold-300" />
+              3 trò chơi dân gian
+            </span>
+          </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-serif tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-100 to-amber-300 drop-shadow-[0_3px_6px_rgba(0,0,0,0.7)] leading-tight">
-              KHOA BẢNG KỲ THÚ
-            </h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif tracking-wide text-gold-200 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] leading-tight">
+            KHOA BẢNG KỲ THÚ
+          </h2>
 
-            <p className="text-sm sm:text-base md:text-lg text-amber-100 font-semibold italic tracking-normal drop-shadow-sm font-sans">
-              “Sĩ tử nào sẽ được gọi tên hôm nay?”
-            </p>
+          <p className="text-sm sm:text-base text-gold-100 font-semibold italic drop-shadow-sm">
+            “Sĩ tử nào sẽ được gọi tên hôm nay?”
+          </p>
 
-            <p className="text-xs sm:text-sm text-yellow-100/90 font-normal max-w-xl drop-shadow-sm leading-relaxed font-sans">
-              Vòng quay khoa bảng, Chiếu Chỉ và Thẻ Sĩ Tử đang chờ để tạo nên những khoảnh khắc bất ngờ và hào hứng cho lớp học!
-            </p>
+          <p className="hidden sm:block text-xs sm:text-sm text-gold-50/85 max-w-xl leading-relaxed drop-shadow-sm">
+            Vòng quay khoa bảng, Chiếu Chỉ và Thẻ Sĩ Tử đang chờ để tạo nên những khoảnh khắc bất ngờ và hào hứng cho lớp học!
+          </p>
 
-            {/* Quick Action Hero Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 font-sans">
+          {/* Quick Action Hero Buttons */}
+          <div className="pt-1 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5">
+            <button
+              id="btn-start-games-hero"
+              type="button"
+              onClick={() => setActiveGame('wheel')}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-b from-gold-300 to-gold-500 hover:from-gold-400 hover:to-gold-600 text-primary-950 font-black text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+            >
+              <RotateCw className="w-4 h-4" />
+              <span className="tracking-wide">BẮT ĐẦU TRÒ CHƠI</span>
+            </button>
+            <div className="flex items-center gap-2">
               <button
-                id="btn-start-games-hero"
+                id="btn-decree-hero"
                 type="button"
-                onClick={() => setActiveGame('wheel')}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-amber-950 font-bold text-sm sm:text-base shadow-xl hover:shadow-amber-400/40 flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer active:scale-95 border-2 border-yellow-100 ring-4 ring-amber-400/30 group/btn"
-              >
-                <div className="w-6 h-6 rounded-full bg-amber-950 text-amber-300 flex items-center justify-center shadow-xs group-hover/btn:scale-110 transition-transform">
-                  <RotateCw className="w-3.5 h-3.5 text-amber-300 ml-0.5" />
-                </div>
-                <span className="tracking-wide">BẮT ĐẦU TRÒ CHƠI</span>
-                <Sparkles className="w-4 h-4 text-amber-900 group-hover/btn:rotate-12 transition-transform" />
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  id="btn-decree-hero"
-                  type="button"
-                  onClick={() => setActiveGame('picker')}
-                  className="px-4 py-2.5 rounded-xl bg-red-900/70 hover:bg-red-900/90 border border-amber-400/40 text-amber-100 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-xs active:scale-95 shadow-md"
-                  title="Mở Thánh Chỉ Triều Đình"
-                >
-                  <span>📜 THÁNH CHỈ</span>
-                </button>
-                <button
-                  id="btn-cards-hero"
-                  type="button"
-                  onClick={() => setActiveGame('riddles')}
-                  className="px-4 py-2.5 rounded-xl bg-teal-900/70 hover:bg-teal-900/90 border border-teal-300/40 text-teal-100 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-xs active:scale-95 shadow-md"
-                  title="Rút Thẻ Sĩ Tử"
-                >
-                  <span>🎴 RÚT THẺ</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Sub-tabs switchers */}
-            <div className="pt-2 flex flex-wrap gap-2.5 justify-center lg:justify-start">
-              <button
-                id="btn-tab-wheel-hero"
-                onClick={() => setActiveGame('wheel')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer ${
-                  activeGame === 'wheel'
-                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 shadow-lg scale-105 border border-yellow-200 font-black'
-                    : 'bg-black/40 hover:bg-black/60 text-amber-200 border border-amber-400/40'
-                }`}
-              >
-                <RotateCw className="w-4 h-4" />
-                <span>Vòng Quay Khoa Bảng</span>
-              </button>
-
-              <button
-                id="btn-tab-decree-hero"
                 onClick={() => setActiveGame('picker')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer ${
-                  activeGame === 'picker'
-                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 shadow-lg scale-105 border border-yellow-200 font-black'
-                    : 'bg-black/40 hover:bg-black/60 text-amber-200 border border-amber-400/40'
-                }`}
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-gold-50 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+                title="Mở Thánh Chỉ Triều Đình"
               >
-                <UserCheck className="w-4 h-4" />
-                <span>Chiếu Chỉ Gọi Tên</span>
+                <span>📜 THÁNH CHỈ</span>
               </button>
-
               <button
-                id="btn-tab-cards-hero"
+                id="btn-cards-hero"
+                type="button"
                 onClick={() => setActiveGame('riddles')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer ${
-                  activeGame === 'riddles'
-                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 shadow-lg scale-105 border border-yellow-200 font-black'
-                    : 'bg-black/40 hover:bg-black/60 text-amber-200 border border-amber-400/40'
-                }`}
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-gold-50 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+                title="Rút Thẻ Sĩ Tử"
               >
-                <HelpCircle className="w-4 h-4" />
-                <span>Đố Vui Trí Tuệ (AI)</span>
+                <span>🎴 RÚT THẺ</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Game selector */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {GAME_TABS.map(tab => {
+          const Icon = tab.icon;
+          const active = activeGame === tab.key;
+          return (
+            <button
+              key={tab.key}
+              id={tab.id}
+              type="button"
+              onClick={() => setActiveGame(tab.key)}
+              aria-pressed={active}
+              className={`card p-2.5 sm:p-3.5 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 text-center sm:text-left transition cursor-pointer min-w-0 ${
+                active
+                  ? 'ring-2 ring-primary-700 border-primary-700 bg-primary-50/40'
+                  : 'hover:-translate-y-0.5 hover:shadow-card-hover hover:border-gold-300'
+              }`}
+            >
+              <span
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  active ? 'bg-gradient-to-br from-primary-700 to-primary-900 text-gold-200' : 'bg-gold-100 text-gold-800'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+              </span>
+              <span className="min-w-0">
+                <span className={`block text-xs sm:text-sm font-black leading-tight ${active ? 'text-primary-900' : 'text-ink'}`}>
+                  {tab.title}
+                </span>
+                <span className="hidden md:block text-[11px] text-ink-muted mt-0.5 truncate">{tab.desc}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Warning banner when no students */}
       {students.length === 0 && (
-        <div className="bg-amber-50 rounded-3xl p-5 border-2 border-dashed border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
+        <div className="card p-4 sm:p-5 border-dashed border-gold-300 bg-gold-50/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img 
               src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí" 
-              className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-sm shrink-0"
+              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-gold-300 shrink-0"
             />
             <div className="text-left">
-              <h4 className="font-black text-slate-800 text-sm">Chưa có môn sinh để quay thưởng & gọi tên</h4>
-              <p className="text-xs text-slate-600">Thầy/Cô có thể nạp nhanh 32 học sinh mẫu hoặc thêm học sinh để quay điểm và bốc thăm gọi bài!</p>
+              <h4 className="font-black text-ink text-sm">Chưa có môn sinh để quay thưởng & gọi tên</h4>
+              <p className="text-xs text-ink-muted">Thầy/Cô có thể nạp nhanh 32 học sinh mẫu hoặc thêm học sinh để quay điểm và bốc thăm gọi bài!</p>
             </div>
           </div>
-          <button
+          <Button
+            variant="gold"
+            size="sm"
+            icon={Sparkles}
+            className="shrink-0 whitespace-nowrap"
             onClick={() => {
               const samples = storage.loadSampleStudents();
               setStudents(samples);
             }}
-            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold text-xs rounded-xl shadow whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0"
           >
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-            <span>Nạp 32 học sinh mẫu</span>
-          </button>
+            Nạp 32 học sinh mẫu
+          </Button>
         </div>
       )}
 
       {/* GAME CONTENT 1: LUCKY WHEEL */}
       {activeGame === 'wheel' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-amber-200 flex flex-col md:flex-row items-center justify-around gap-8">
+        <div className="card p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row items-center justify-around gap-6 md:gap-8 animate-fade-in">
           {/* Wheel Canvas & Pointer */}
-          <div className="relative flex flex-col items-center">
+          <div className="relative flex flex-col items-center w-full max-w-[340px]">
             {/* Pointer arrow */}
-            <div className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[30px] border-t-red-600 drop-shadow-md z-10 -mb-4" />
+            <div className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[30px] border-t-primary-700 drop-shadow-md z-10 -mb-4" />
             
             <canvas
               ref={canvasRef}
               width={340}
               height={340}
-              className="rounded-full shadow-2xl border-4 border-amber-400"
+              className="w-full h-auto aspect-square rounded-full shadow-card-hover ring-4 ring-gold-400 ring-offset-2 ring-offset-white"
             />
           </div>
 
           {/* Wheel Controls & Results */}
-          <div className="flex-1 max-w-md text-center md:text-left space-y-4">
+          <div className="flex-1 w-full max-w-md text-center md:text-left space-y-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+              <span className={sectionBadge}>
                 Vòng Quay May Mắn
               </span>
-              <h3 className="text-2xl font-black text-slate-800 mt-2">
+              <h3 className="text-xl sm:text-2xl font-black font-serif text-primary-900 mt-2">
                 Quay Thưởng Hoa Điểm Tốt
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs sm:text-sm text-ink-muted mt-1">
                 Quay thưởng ngẫu nhiên hoa điểm, tràng pháo tay hoặc phần quà may mắn cho học sinh tích cực.
               </p>
             </div>
 
             {/* Select student to reward */}
-            <div className="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200">
-              <label className="block text-xs font-bold text-amber-900 mb-1.5">
+            <div className="bg-paper-warm p-3.5 rounded-2xl border border-paper-line text-left">
+              <label className="block text-xs font-bold text-ink-soft mb-1.5">
                 Cộng điểm cho học sinh đang quay (tùy chọn):
               </label>
               <select
                 value={selectedStudentForReward}
                 onChange={e => setSelectedStudentForReward(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="input font-semibold"
               >
                 {students.map(s => (
                   <option key={s.id} value={s.id}>
@@ -571,67 +571,70 @@ export const GamesView: React.FC<GamesViewProps> = ({
 
             {/* Result Box */}
             {wheelResult && (
-              <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-400 rounded-2xl p-4 text-center animate-bounce">
-                <div className="text-xs uppercase font-bold text-amber-800">KẾT QUẢ QUAY ĐƯỢC:</div>
-                <div className="text-2xl font-black text-red-700 mt-1">
+              <div className="bg-gold-50 border border-gold-300 rounded-2xl p-4 text-center animate-pop-in">
+                <div className="text-[11px] uppercase font-bold tracking-wider text-gold-800">Kết quả quay được</div>
+                <div className="text-2xl font-black font-serif text-primary-800 mt-1">
                   🎉 {wheelResult} 🎉
                 </div>
               </div>
             )}
 
             {/* Spin Button */}
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={spinWheel}
               disabled={isSpinning}
-              className="w-full py-4 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-600 hover:from-red-700 hover:to-yellow-700 text-white font-black text-base sm:text-lg rounded-2xl shadow-xl border-2 border-yellow-300 transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full py-3.5 text-base sm:text-lg font-black"
             >
-              <RotateCw className={`w-5 h-5 ${isSpinning ? 'animate-spin' : ''}`} />
+              <RotateCw className={`w-5 h-5 text-gold-300 ${isSpinning ? 'animate-spin' : ''}`} />
               <span>{isSpinning ? 'Đang quay tít mù...' : 'QUAY NGAY!'}</span>
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* GAME CONTENT 2: RANDOM STUDENT PICKER */}
       {activeGame === 'picker' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-amber-200 max-w-2xl mx-auto text-center space-y-6">
+        <div className="card p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto text-center space-y-5 animate-fade-in">
           <div className="flex flex-col items-center">
             <div className="relative mb-2">
               <img 
                 src={getAssetUrl("/assets/images/trang-ti.jpg")} 
                 alt="Trạng Tí Ban Chiếu" 
-                className="w-20 h-20 rounded-full object-cover border-4 border-amber-400 shadow-md"
+                className="w-20 h-20 rounded-full object-cover ring-4 ring-gold-300 shadow-card"
               />
-              <span className="absolute -bottom-1 -right-1 text-base bg-white rounded-full p-0.5 shadow border border-amber-300">
+              <span className="absolute -bottom-1 -right-1 text-base bg-white rounded-full p-0.5 shadow-sm border border-paper-line">
                 📜
               </span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+            <span className={sectionBadge}>
               Chiếu Chỉ Trạng Tí
             </span>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mt-2 font-serif">
+            <h3 className="text-xl sm:text-2xl font-black text-primary-900 mt-2 font-serif">
               Bốc Thăm Gọi Tên Lên Bảng
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-serif">
-              Hệ thống tự động ghi nhớ các em đã gọi ({calledIds.length}/{students.length} em) để không bị trùng lặp.
+            <p className="text-xs sm:text-sm text-ink-muted mt-1">
+              Hệ thống tự động ghi nhớ các em đã gọi (<b className="text-ink">{calledIds.length}/{students.length}</b> em) để không bị trùng lặp.
             </p>
           </div>
 
           {/* Random Name Showcase Box */}
-          <div className="border-4 border-dashed border-amber-400 bg-amber-50/50 rounded-3xl p-8 shadow-inner min-h-[160px] flex flex-col items-center justify-center relative overflow-hidden">
-            <span className="text-xs font-serif uppercase tracking-widest text-amber-800 font-bold mb-2">
-              SĨ TỬ ĐƯỢC CHỌN:
+          <div className="border-2 border-dashed border-gold-300 bg-paper-warm rounded-3xl p-6 sm:p-8 min-h-[160px] flex flex-col items-center justify-center relative overflow-hidden">
+            <span className="text-[11px] uppercase tracking-widest text-gold-800 font-bold mb-2">
+              Sĩ tử được chọn
             </span>
-            <div className="text-3xl sm:text-4xl font-black text-amber-950 font-brand tracking-wider">
+            <div className="text-3xl sm:text-4xl font-black text-primary-900 font-brand tracking-wider break-words">
               {candidateName}
             </div>
 
             {selectedStudent && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs font-bold px-3 py-1 bg-amber-200 text-amber-900 rounded-full">
+              <div className="mt-3 flex items-center justify-center gap-2 flex-wrap animate-pop-in">
+                <span className="text-xs font-bold px-3 py-1 bg-gold-100 text-gold-800 rounded-full">
                   {selectedStudent.role}
                 </span>
                 <button
+                  type="button"
                   onClick={() => {
                     const newPts = selectedStudent.points + 2;
                     const updated = students.map(s => s.id === selectedStudent.id ? { ...s, points: newPts } : s);
@@ -640,7 +643,7 @@ export const GamesView: React.FC<GamesViewProps> = ({
                     soundEngine.playPointGain();
                     confetti({ particleCount: 50, spread: 40 });
                   }}
-                  className="text-xs font-bold px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center gap-1 shadow"
+                  className="text-xs font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center gap-1 shadow-sm cursor-pointer transition active:scale-95"
                 >
                   <Sparkles className="w-3 h-3" />
                   <span>Thưởng +2 Điểm vì trả lời tốt</span>
@@ -650,96 +653,97 @@ export const GamesView: React.FC<GamesViewProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-3 justify-center">
-            <button
+          <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+            <Button
+              variant="primary"
+              size="lg"
               onClick={handlePickRandomStudent}
               disabled={isCalling}
-              className="px-8 py-3.5 bg-gradient-to-r from-red-600 to-amber-700 hover:from-red-700 hover:to-amber-800 text-white font-black text-sm sm:text-base rounded-2xl shadow-xl border border-red-500 transition-all active:scale-95 disabled:opacity-60 flex items-center gap-2"
+              className="font-black"
             >
-              <Sparkles className="w-5 h-5 text-yellow-300" />
+              <Sparkles className="w-5 h-5 text-gold-300" />
               <span>{isCalling ? 'Đang chọn Trạng Tí...' : 'BỐC THĂM GỌI TÊN!'}</span>
-            </button>
+            </Button>
 
-            <button
-              onClick={handleResetCalledIds}
-              className="px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-2xl transition-all"
-            >
+            <Button variant="outline" size="lg" icon={RefreshCw} onClick={handleResetCalledIds}>
               Đặt lại lượt gọi
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* GAME CONTENT 3: RIDDLES */}
       {activeGame === 'riddles' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-amber-200 max-w-2xl mx-auto space-y-6">
+        <div className="card p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-5 animate-fade-in">
           <div className="flex flex-col items-center text-center">
             <img 
               src={getAssetUrl("/assets/images/trang-ti.jpg")} 
               alt="Trạng Tí Đố Bạn" 
-              className="w-20 h-20 rounded-full object-cover border-4 border-amber-400 shadow-md mb-2"
+              className="w-20 h-20 rounded-full object-cover ring-4 ring-gold-300 shadow-card mb-2"
             />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+            <span className={sectionBadge}>
               Đố Vui Dân Gian & Trí Tuệ
             </span>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mt-2 font-serif">
+            <h3 className="text-xl sm:text-2xl font-black text-primary-900 mt-2 font-serif">
               Trạng Tí Đố Bạn
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-ink-muted mt-1">
               Câu đố dân gian vui nhộn, phát triển tư duy ngôn ngữ và logic cho học sinh
             </p>
           </div>
 
           {/* Topic & AI Generate */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-amber-50 rounded-2xl border border-amber-200">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-              <span>Chủ đề:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-3 bg-paper-warm rounded-2xl border border-paper-line">
+            <label className="flex items-center gap-2 text-xs font-bold text-ink-soft flex-1 min-w-0">
+              <span className="shrink-0">Chủ đề:</span>
               <input
                 type="text"
                 value={riddleTopic}
                 onChange={e => setRiddleTopic(e.target.value)}
                 placeholder="e.g. toán học, tiếng việt, loài vật"
-                className="px-3 py-1 bg-white border border-amber-300 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="input py-1.5 text-xs font-semibold"
               />
-            </div>
+            </label>
 
-            <button
+            <Button
+              variant="gold"
+              size="sm"
+              icon={Sparkles}
               onClick={handleFetchNewRiddle}
               disabled={isLoadingRiddle}
-              className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition-all disabled:opacity-60 flex items-center gap-1.5"
+              className="shrink-0 py-2"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isLoadingRiddle ? 'Trạng Tí đang nghĩ...' : 'Đổi Câu Đố Mới'}</span>
-            </button>
+              {isLoadingRiddle ? 'Trạng Tí đang nghĩ...' : 'Đổi Câu Đố Mới'}
+            </Button>
           </div>
 
           {/* Riddle Card */}
-          <div className="border-4 border-amber-400 bg-gradient-to-br from-amber-50/70 to-yellow-50/80 rounded-3xl p-6 sm:p-8 shadow-inner text-center font-serif">
+          <div className="border border-gold-300 bg-gradient-to-br from-gold-50 to-paper rounded-3xl p-5 sm:p-8 shadow-inner-gold text-center">
             <div className="text-3xl mb-2">🐭 📜</div>
-            <h4 className="text-lg sm:text-xl font-black text-amber-950 mb-3 leading-relaxed">
+            <h4 className="text-lg sm:text-xl font-black font-serif text-ink mb-3 leading-relaxed">
               « {riddle.question} »
             </h4>
 
             {riddle.hint && (
-              <p className="text-xs font-sans text-slate-500 italic mb-4">
+              <p className="text-xs text-ink-muted italic mb-4">
                 💡 Gợi ý: {riddle.hint}
               </p>
             )}
 
             {showAnswer ? (
-              <div className="bg-emerald-100 border border-emerald-300 rounded-2xl p-4 text-emerald-950 font-sans font-bold text-sm sm:text-base animate-fadeIn">
-                🎯 Đáp án: <span className="text-lg font-black text-emerald-800">{riddle.answer}</span>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-emerald-900 font-bold text-sm sm:text-base animate-pop-in">
+                🎯 Đáp án: <span className="text-lg font-black text-emerald-700">{riddle.answer}</span>
               </div>
             ) : (
-              <button
+              <Button
+                variant="primary"
                 onClick={() => {
                   setShowAnswer(true);
                   soundEngine.playPointGain();
                 }}
-                className="px-6 py-2.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-sans font-bold text-xs sm:text-sm rounded-xl transition-all shadow"
               >
                 Mở Đáp Án Bí Mật
-              </button>
+              </Button>
             )}
           </div>
         </div>

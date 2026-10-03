@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Edit, Camera } from 'lucide-react';
+import { UserPlus, Edit, Camera, Save } from 'lucide-react';
 import { Student, Group } from '../../types';
 import { AVATAR_OPTIONS } from '../../utils/ranks';
 import { soundEngine } from '../../utils/soundEngine';
+import { Modal, Button } from '../ui';
 
 interface AddEditStudentModalProps {
   isOpen: boolean;
@@ -11,6 +12,12 @@ interface AddEditStudentModalProps {
   groups: Group[];
   onSave: (student: Student) => void;
 }
+
+const FORM_ID = 'form-add-edit-student';
+
+const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="block text-xs font-bold text-ink-soft mb-1">{children}</label>
+);
 
 export const AddEditStudentModal: React.FC<AddEditStudentModalProps> = ({
   isOpen,
@@ -83,163 +90,150 @@ export const AddEditStudentModal: React.FC<AddEditStudentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-amber-400 relative max-h-[92vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      size="md"
+      icon={studentToEdit ? Edit : UserPlus}
+      title={studentToEdit ? 'Chỉnh Sửa Hồ Sơ Học Sinh' : 'Thêm Học Sinh Mới'}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button type="submit" form={FORM_ID} variant="primary" icon={Save}>
+            Lưu Thông Tin
+          </Button>
+        </>
+      }
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-3.5 font-sans">
+        <div>
+          <Label>Họ và Tên</Label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Nguyễn Gia Bảo"
+            value={formData.name || ''}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            className="input font-bold"
+          />
+        </div>
 
-        <h3 className="text-xl font-black text-slate-800 text-center mb-4 font-serif">
-          {studentToEdit ? 'Chỉnh Sửa Hồ Sơ Học Sinh' : 'Thêm Học Sinh Mới'}
-        </h3>
-
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs sm:text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Họ và Tên</label>
+            <Label>Giới Tính</Label>
+            <select
+              value={formData.gender || 'male'}
+              onChange={e => setFormData({ ...formData, gender: e.target.value as any })}
+              className="input"
+            >
+              <option value="male">Nam</option>
+              <option value="female">Nữ</option>
+            </select>
+          </div>
+          <div>
+            <Label>Ngày Sinh</Label>
             <input
-              type="text"
-              required
-              placeholder="e.g. Nguyễn Gia Bảo"
-              value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
+              type="date"
+              value={formData.birthDate || '2016-01-01'}
+              onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+              className="input"
             />
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Giới Tính</label>
-              <select
-                value={formData.gender || 'male'}
-                onChange={e => setFormData({ ...formData, gender: e.target.value as any })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="male">Nam</option>
-                <option value="female">Nữ</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Ngày Sinh</label>
-              <input
-                type="date"
-                value={formData.birthDate || '2016-01-01'}
-                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Tổ Thi Đua</label>
-              <select
-                value={formData.groupId || 'group-1'}
-                onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                {groups.map(g => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Chức Vụ</label>
-              <select
-                value={formData.role || 'Học sinh'}
-                onChange={e => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="Học sinh">Học sinh</option>
-                <option value="Lớp trưởng">Lớp trưởng</option>
-                <option value="Lớp phó học tập">Lớp phó học tập</option>
-                <option value="Lớp phó phong trào">Lớp phó phong trào</option>
-                <option value="Lớp phó đời sống">Lớp phó đời sống</option>
-                <option value="Tổ trưởng Tổ 1">Tổ trưởng Tổ 1</option>
-                <option value="Tổ trưởng Tổ 2">Tổ trưởng Tổ 2</option>
-                <option value="Tổ trưởng Tổ 3">Tổ trưởng Tổ 3</option>
-                <option value="Tổ trưởng Tổ 4">Tổ trưởng Tổ 4</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Linh vật */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Linh Vật Đại Diện</label>
-            <div className="grid grid-cols-4 gap-1.5 max-h-32 overflow-y-auto p-1 bg-slate-50 border border-slate-200 rounded-xl">
-              {AVATAR_OPTIONS.map(av => (
-                <button
-                  key={av.id}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, avatar: av.id })}
-                  className={`p-1.5 rounded-lg border flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer ${
-                    formData.avatar === av.id ? 'border-amber-500 bg-amber-100' : 'border-transparent hover:bg-slate-200/50'
-                  }`}
-                >
-                  <span className="text-lg">{av.emoji}</span>
-                  <span className="text-[9px] font-semibold text-slate-700 truncate w-full">{av.name.split(' ')[0]}</span>
-                </button>
+            <Label>Tổ Thi Đua</Label>
+            <select
+              value={formData.groupId || 'group-1'}
+              onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+              className="input"
+            >
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
               ))}
-            </div>
+            </select>
           </div>
-
-          {/* Custom Photo Upload */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Hoặc ảnh chụp thật học sinh</label>
-            <div className="flex items-center gap-3">
-              {formData.customPhotoUrl ? (
-                <img src={formData.customPhotoUrl} alt="Preview" className="w-12 h-12 rounded-xl object-cover border-2 border-amber-400" />
-              ) : (
-                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center text-slate-400">
-                  <Camera className="w-5 h-5" />
-                </div>
-              )}
-              <label className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer border border-slate-300">
-                <span>Chọn ảnh từ máy</span>
-                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-              </label>
-              {formData.customPhotoUrl && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, customPhotoUrl: '' })}
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  Gỡ ảnh
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Hoa Điểm Khởi Điểm</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.points || 0}
-              onChange={e => setFormData({ ...formData, points: Number(e.target.value) })}
-              className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs"
+            <Label>Chức Vụ</Label>
+            <select
+              value={formData.role || 'Học sinh'}
+              onChange={e => setFormData({ ...formData, role: e.target.value })}
+              className="input"
             >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow cursor-pointer transition-all"
-            >
-              Lưu Thông Tin
-            </button>
+              <option value="Học sinh">Học sinh</option>
+              <option value="Lớp trưởng">Lớp trưởng</option>
+              <option value="Lớp phó học tập">Lớp phó học tập</option>
+              <option value="Lớp phó phong trào">Lớp phó phong trào</option>
+              <option value="Lớp phó đời sống">Lớp phó đời sống</option>
+              <option value="Tổ trưởng Tổ 1">Tổ trưởng Tổ 1</option>
+              <option value="Tổ trưởng Tổ 2">Tổ trưởng Tổ 2</option>
+              <option value="Tổ trưởng Tổ 3">Tổ trưởng Tổ 3</option>
+              <option value="Tổ trưởng Tổ 4">Tổ trưởng Tổ 4</option>
+            </select>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        {/* Linh vật */}
+        <div>
+          <Label>Linh Vật Đại Diện</Label>
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-36 overflow-y-auto p-1.5 bg-paper border border-paper-line rounded-xl">
+            {AVATAR_OPTIONS.map(av => (
+              <button
+                key={av.id}
+                type="button"
+                onClick={() => setFormData({ ...formData, avatar: av.id })}
+                className={`p-1.5 rounded-lg border flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer ${
+                  formData.avatar === av.id ? 'border-gold-500 bg-gold-100 shadow-inner-gold' : 'border-transparent hover:bg-paper-warm'
+                }`}
+              >
+                <span className="text-lg">{av.emoji}</span>
+                <span className="text-[9px] font-semibold text-ink-soft truncate w-full">{av.name.split(' ')[0]}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Photo Upload */}
+        <div>
+          <Label>Hoặc ảnh chụp thật học sinh</Label>
+          <div className="flex items-center gap-3 flex-wrap">
+            {formData.customPhotoUrl ? (
+              <img src={formData.customPhotoUrl} alt="Preview" className="w-12 h-12 rounded-xl object-cover border-2 border-gold-400" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-paper border border-dashed border-paper-line flex items-center justify-center text-ink-muted">
+                <Camera className="w-5 h-5" />
+              </div>
+            )}
+            <label className="inline-flex items-center px-3 py-1.5 bg-white border border-paper-line hover:border-gold-400 text-ink-soft hover:text-ink font-bold rounded-lg text-xs cursor-pointer transition-all">
+              <span>Chọn ảnh từ máy</span>
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+            </label>
+            {formData.customPhotoUrl && (
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, customPhotoUrl: '' })}
+                className="text-xs font-bold text-primary-700 hover:underline cursor-pointer"
+              >
+                Gỡ ảnh
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label>Hoa Điểm Khởi Điểm</Label>
+          <input
+            type="number"
+            min="0"
+            value={formData.points || 0}
+            onChange={e => setFormData({ ...formData, points: Number(e.target.value) })}
+            className="input"
+          />
+        </div>
+      </form>
+    </Modal>
   );
 };

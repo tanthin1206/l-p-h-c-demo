@@ -129,13 +129,15 @@ export const Modal: React.FC<{
   size?: 'sm' | 'md' | 'lg' | 'xl';
   footer?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ open, onClose, title, subtitle, icon: Icon, size = 'md', footer, children }) => {
+  /** Close when clicking the dark backdrop. Off by default so half-filled forms are not lost. */
+  dismissOnBackdrop?: boolean;
+}> = ({ open, onClose, title, subtitle, icon: Icon, size = 'md', footer, children, dismissOnBackdrop = false }) => {
   if (!open) return null;
   const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-primary-950/55 backdrop-blur-[2px] animate-fade-in"
-      onClick={onClose}
+      onClick={dismissOnBackdrop ? onClose : undefined}
     >
       <div
         role="dialog"
