@@ -111,7 +111,6 @@ export type ActiveTab =
   | 'attendance'
   | 'honor'
   | 'groups'
-  | 'assignments'
   | 'games'
   | 'reports'
   | 'settings';

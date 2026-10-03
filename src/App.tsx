@@ -6,7 +6,6 @@ import {
   Criterion, 
   PointLog, 
   AttendanceDay, 
-  Assignment, 
   ClassConfig 
 } from './types';
 import { storage } from './utils/storage';
@@ -22,7 +21,6 @@ import { StudentsView } from './components/views/StudentsView';
 import { AttendanceView } from './components/views/AttendanceView';
 import { HonorView } from './components/views/HonorView';
 import { GroupsView } from './components/views/GroupsView';
-import { AssignmentsView } from './components/views/AssignmentsView';
 import { GamesView } from './components/views/GamesView';
 import { ReportsView } from './components/views/ReportsView';
 import { SettingsView } from './components/views/SettingsView';
@@ -60,7 +58,6 @@ export const App: React.FC = () => {
   const [criteria, setCriteria] = useState<Criterion[]>(() => storage.getCriteria());
   const [pointLogs, setPointLogs] = useState<PointLog[]>(() => storage.getPointLogs());
   const [attendance, setAttendance] = useState<AttendanceDay[]>(() => storage.getAttendance());
-  const [assignments, setAssignments] = useState<Assignment[]>(() => storage.getAssignments());
   const [config, setConfig] = useState<ClassConfig>(() => storage.getConfig());
 
   // Modal States
@@ -228,13 +225,12 @@ export const App: React.FC = () => {
     }
   };
 
-  // Today absent count & pending assignments
+  // Today absent count
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayRec = attendance.find(a => a.date === todayStr);
   const todayAbsentCount = todayRec 
     ? todayRec.records.filter(r => r.status === 'excused' || r.status === 'unexcused').length 
     : 0;
-  const pendingAssignmentsCount = assignments.filter(a => a.completedStudentIds.length < students.length).length;
 
   return (
     <div className="min-h-screen text-[#2D241E] flex flex-col font-sans relative bg-[#FFFCF5]">
@@ -249,7 +245,6 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         todayAbsentCount={todayAbsentCount}
-        pendingAssignmentsCount={pendingAssignmentsCount}
         config={config}
         isMobileOpen={isMobileNavOpen}
         onCloseMobile={() => setIsMobileNavOpen(false)}
@@ -341,17 +336,6 @@ export const App: React.FC = () => {
               students={students}
               setStudents={setStudents}
               criteria={criteria}
-              pointLogs={pointLogs}
-              setPointLogs={setPointLogs}
-            />
-          )}
-
-          {activeTab === 'assignments' && (
-            <AssignmentsView
-              assignments={assignments}
-              setAssignments={setAssignments}
-              students={students}
-              setStudents={setStudents}
               pointLogs={pointLogs}
               setPointLogs={setPointLogs}
             />

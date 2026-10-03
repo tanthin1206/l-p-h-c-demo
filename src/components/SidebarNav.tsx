@@ -4,7 +4,6 @@ import {
   CalendarCheck, 
   Award, 
   Users2, 
-  BookOpen, 
   Gamepad2, 
   BarChart3, 
   Settings, 
@@ -18,7 +17,6 @@ interface SidebarNavProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   todayAbsentCount: number;
-  pendingAssignmentsCount: number;
   config: ClassConfig;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -30,7 +28,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   activeTab,
   onTabChange,
   todayAbsentCount,
-  pendingAssignmentsCount,
   config,
   isMobileOpen = false,
   onCloseMobile,
@@ -48,7 +45,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { id: "attendance", label: "Điểm Danh", icon: CalendarCheck, badge: todayAbsentCount > 0 ? `${todayAbsentCount} vắng` : null, badgeColor: "bg-amber-400 text-red-950 font-bold" },
     { id: "honor", label: "Bảng Vàng & Vinh Danh", icon: Award, badge: "Vinh danh", badgeColor: "bg-amber-400 text-amber-950 font-black" },
     { id: "groups", label: "Thi Đua Tổ", icon: Users2, badge: null, badgeColor: "" },
-    { id: "assignments", label: "Giao Bài Tập", icon: BookOpen, badge: pendingAssignmentsCount > 0 ? `${pendingAssignmentsCount} bài` : null, badgeColor: "bg-amber-300 text-amber-950 font-bold" },
     { id: "games", label: "Trò Chơi Trạng Nguyên", icon: Gamepad2, badge: "Vui nhộn", badgeColor: "bg-rose-400 text-white font-bold" },
     { id: "reports", label: "Báo Cáo & AI", icon: BarChart3, badge: "AI 3.7", badgeColor: "bg-amber-300 text-amber-950 font-bold" },
     { id: "settings", label: "Cài Đặt Hệ Thống", icon: Settings, badge: null, badgeColor: "" },
