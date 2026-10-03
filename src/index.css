@@ -5,64 +5,18 @@
 @layer base {
   :root {
     --font-brand: "Dancing Script", "Be Vietnam Pro", cursive;
-    --font-serif: "Lora", Georgia, serif;
+    --font-serif: "Lora", "Noto Serif", Georgia, serif;
     --font-sans: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-
-  html {
-    /* Chế độ trình chiếu phóng to toàn bộ giao diện (rem-based) */
-    font-size: 16px;
-    transition: font-size 0.2s ease;
-  }
-  html.presentation {
-    font-size: 20px;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #FFFCF5;
-    color: #2D241E;
+    background-color: rgb(255 251 235 / 0.4);
+    color: rgb(30 41 59);
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
   }
-
-  :focus-visible {
-    outline: 2px solid #F59E0B;
-    outline-offset: 2px;
-  }
-}
-
-@layer components {
-  /* Khung thẻ chuẩn */
-  .card {
-    @apply bg-white rounded-2xl border border-paper-line shadow-card;
-  }
-  /* Tiêu đề trang */
-  .page-title {
-    @apply text-xl sm:text-2xl font-black font-serif text-primary-900 tracking-tight;
-  }
-  .page-subtitle {
-    @apply text-xs sm:text-sm text-ink-muted;
-  }
-  /* Ô nhập liệu */
-  .input {
-    @apply w-full px-3 py-2 text-sm bg-white border border-paper-line rounded-xl text-ink
-      placeholder:text-ink-muted/70 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 transition;
-  }
-  /* Chip lọc */
-  .chip {
-    @apply px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer
-      border border-paper-line bg-white text-ink-soft hover:border-gold-400 hover:text-ink;
-  }
-  .chip-active {
-    @apply bg-primary-800 border-primary-800 text-gold-100 shadow-sm hover:text-gold-100 hover:border-primary-800;
-  }
-}
-
-/* Lớp tương thích cho code cũ dùng animate-fadeIn */
-.animate-fadeIn {
-  animation: fadeIn 0.18s ease-out both;
 }
 
 .font-brand {
@@ -79,44 +33,24 @@
   font-family: var(--font-sans);
 }
 
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
-  scrollbar-width: none;
-}
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f5e6d366;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #b4530955;
+  background: #b4530966;
   border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b45309aa;
-  background-clip: padding-box;
-}
-
-/* Tôn trọng cài đặt giảm chuyển động của hệ điều hành */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  background: #b45309b3;
 }
 
 @media print {

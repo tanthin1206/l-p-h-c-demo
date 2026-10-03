@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, ChevronRight } from 'lucide-react';
+import { Crown, Sparkles, Trophy } from 'lucide-react';
 import { Student } from '../types';
 import { getRankByPoints } from '../utils/ranks';
 import { ChibiAvatar } from './ChibiAvatar';
@@ -10,70 +10,91 @@ interface TopScholarsStripProps {
   onOpenDetailModal: (student: Student) => void;
 }
 
-const PODIUM = [
-  { medal: '🥇', ring: 'ring-gold-400 bg-gradient-to-b from-gold-50 to-white border-gold-300' },
-  { medal: '🥈', ring: 'ring-slate-300 bg-gradient-to-b from-slate-50 to-white border-slate-200' },
-  { medal: '🥉', ring: 'ring-orange-300 bg-gradient-to-b from-orange-50 to-white border-orange-200' },
-];
-
 export const TopScholarsStrip: React.FC<TopScholarsStripProps> = ({
   students,
   onOpenHonorBoard,
   onOpenDetailModal
 }) => {
-  const top3 = [...students].filter(s => s.points > 0).sort((a, b) => b.points - a.points).slice(0, 3);
+  const top3 = [...students].sort((a, b) => b.points - a.points).slice(0, 3);
   if (top3.length === 0) return null;
 
   return (
     <div
       id="top-scholars-strip"
-      className="card p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3 sm:gap-4 select-none"
+      className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-3xl p-4 sm:p-5 border-2 border-amber-300 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 select-none"
     >
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-gold-300 to-gold-600 flex items-center justify-center text-xl shadow-sm">
+      {/* Left info */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white flex items-center justify-center text-2xl shadow-md shrink-0 border border-amber-300">
           🏆
         </div>
         <div>
-          <h3 className="text-base sm:text-lg font-black font-serif text-primary-900 leading-tight">Bảng Vàng Danh Dự</h3>
-          <p className="text-xs text-ink-muted">Top 3 môn sinh dẫn đầu lớp</p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg sm:text-xl font-black text-amber-950 font-serif">
+              BẢNG VÀNG DANH DỰ
+            </h3>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 border border-amber-400 font-sans">
+              TOP 3 DẪN ĐẦU
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 font-sans">
+            Vinh danh những Sĩ tử có thành tích thi đua xuất sắc nhất lớp
+          </p>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-3">
+      {/* Center 3 cards */}
+      <div className="flex items-center justify-around sm:justify-center gap-2 sm:gap-4 flex-1">
         {top3.map((student, idx) => {
           const rank = getRankByPoints(student.points);
-          const p = PODIUM[idx];
+          const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉";
+          const borderClass =
+            idx === 0
+              ? "border-amber-400 ring-2 ring-yellow-400 bg-yellow-50/90"
+              : idx === 1
+              ? "border-purple-300 bg-purple-50/90"
+              : "border-amber-200 bg-amber-50/90";
+
           return (
-            <button
+            <div
               key={student.id}
-              type="button"
               onClick={() => onOpenDetailModal(student)}
-              className={`flex items-center gap-2 sm:gap-2.5 p-2 rounded-2xl border ring-1 ${p.ring} hover:-translate-y-0.5 hover:shadow-card transition cursor-pointer text-left min-w-0`}
+              className={`flex items-center gap-2 p-2 sm:px-3 rounded-2xl border ${borderClass} shadow-xs hover:scale-105 transition-all cursor-pointer bg-white/90`}
               title={`Xem hồ sơ của ${student.name}`}
             >
               <div className="relative shrink-0">
-                <ChibiAvatar points={student.points} gender={student.gender} size="sm" customPhotoUrl={student.customPhotoUrl} />
-                <span className="absolute -top-1 -left-1 text-base drop-shadow">{p.medal}</span>
+                <ChibiAvatar
+                  points={student.points}
+                  gender={student.gender}
+                  size="sm"
+                  customPhotoUrl={student.customPhotoUrl}
+                />
+                <span className="absolute -top-1.5 -right-1.5 text-xs bg-white rounded-full p-0.5 shadow border border-amber-300">
+                  {medal}
+                </span>
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-ink text-xs sm:text-sm truncate">{student.name}</div>
-                <div className="text-[11px] text-ink-muted truncate">
-                  <b className="text-primary-700">{student.points}đ</b> · {rank.tier}
+                <div className="font-bold text-slate-900 text-xs truncate max-w-[90px] sm:max-w-[120px] font-serif">
+                  {student.name}
+                </div>
+                <div className="text-[10px] font-bold text-rose-600 flex items-center gap-0.5">
+                  <span>🌸 {student.points}</span>
+                  <span className="text-slate-400 font-normal">| {rank.tier}</span>
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
 
+      {/* Right button to open full honor modal */}
       <button
         type="button"
         onClick={onOpenHonorBoard}
-        className="shrink-0 h-10 px-4 rounded-xl bg-primary-800 hover:bg-primary-900 text-gold-100 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer transition"
+        className="px-4 py-2 rounded-2xl bg-gradient-to-r from-red-700 to-amber-700 hover:from-red-800 hover:to-amber-800 text-white font-bold text-xs shadow-md border border-amber-500/50 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all hover:scale-105"
       >
-        <Crown className="w-4 h-4 text-gold-300" />
-        Xem bảng vàng
-        <ChevronRight className="w-4 h-4 opacity-70" />
+        <Crown className="w-4 h-4 text-yellow-300" />
+        <span>Xem Bảng Vàng</span>
       </button>
     </div>
   );

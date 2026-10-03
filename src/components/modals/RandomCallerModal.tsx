@@ -56,13 +56,20 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
   const rafRef = useRef<number | null>(null);
   const rotationRef = useRef<number>(0);
 
-  // Danh sách học sinh trên vòng quay
-  const pool = useMemo(() => {
+  // Danh sách học sinh đủ điều kiện (tính lại theo bộ lọc / danh sách đã gọi)
+  const freshPool = useMemo(() => {
     const byGroup = groupFilter === 'all' ? students : students.filter(s => s.groupId === groupFilter);
     if (!skipCalled) return byGroup;
     const remaining = byGroup.filter(s => !calledIds.includes(s.id));
     return remaining.length > 0 ? remaining : byGroup;
   }, [students, groupFilter, skipCalled, calledIds]);
+
+  // Danh sách đang HIỂN THỊ trên vòng quay. Được "đóng băng" khi đang quay và sau khi có kết quả,
+  // để việc loại em vừa trúng khỏi danh sách không làm các ô dịch chuyển dưới kim chỉ.
+  const [pool, setPool] = useState<Student[]>(freshPool);
+  useEffect(() => {
+    if (!isSpinning && !chosenStudent) setPool(freshPool);
+  }, [freshPool, isSpinning, chosenStudent]);
 
   const segAngle = pool.length > 0 ? 360 / pool.length : 360;
 
@@ -77,16 +84,19 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
   }, [isOpen]);
 
   const handleSpin = useCallback(() => {
-    if (isSpinning || pool.length === 0) return;
+    if (isSpinning || freshPool.length === 0) return;
+    // Lượt mới: nạp danh sách mới nhất lên vòng rồi mới quay
+    const spinPool = freshPool;
+    setPool(spinPool);
     setIsSpinning(true);
     setChosenStudent(null);
     setAwarded(null);
     soundEngine.playFestiveDrum();
 
-    const n = pool.length;
+    const n = spinPool.length;
     const seg = 360 / n;
     const winnerIndex = Math.floor(Math.random() * n);
-    const winner = pool[winnerIndex];
+    const winner = spinPool[winnerIndex];
 
     // Góc để tâm ô thắng nằm đúng dưới kim chỉ (đỉnh trên)
     const jitter = (Math.random() - 0.5) * seg * 0.6;
@@ -126,7 +136,13 @@ export const RandomCallerModal: React.FC<RandomCallerModalProps> = ({
       }
     };
     rafRef.current = requestAnimationFrame(step);
-  }, [isSpinning, pool, calledIds]);
+  }, [isSpinning, freshPool, calledIds]);
+
+  // Đổi bộ lọc (tổ / bỏ qua em đã gọi) thì xoá kết quả cũ để vòng quay cập nhật danh sách mới
+  useEffect(() => {
+    setChosenStudent(null);
+    setAwarded(null);
+  }, [groupFilter, skipCalled]);
 
   // Phím Space / Enter để quay khi modal mở
   useEffect(() => {

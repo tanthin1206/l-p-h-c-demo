@@ -359,6 +359,11 @@ export const GamesView: React.FC<GamesViewProps> = ({
         icon={Gamepad2}
         title="Trò chơi lớp học"
         subtitle="Vòng quay khoa bảng, Chiếu Chỉ gọi tên và Đố vui trí tuệ cho giờ học thêm hào hứng"
+        actions={
+          <Button variant="outline" size="sm" icon={ImageIcon} onClick={() => setIsBannerEditorOpen(true)}>
+            Thay banner
+          </Button>
+        }
       />
 
       {/* HERO GAME BANNER */}

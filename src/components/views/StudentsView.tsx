@@ -1,27 +1,29 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Minus, 
   Search, 
+  Filter, 
   LayoutGrid, 
-  Grid3x3,
   Table as TableIcon, 
   Download, 
   UserPlus, 
+  Award, 
   Sparkles, 
+  Star, 
   Eye, 
   Edit, 
   Trash2, 
+  Gift, 
   CheckSquare, 
+  Square, 
   Layers, 
   SlidersHorizontal,
-  Crown,
-  MoreHorizontal
+  Crown
 } from 'lucide-react';
 import { Student, Group, Criterion, PointLog, ClassConfig } from '../../types';
-import { getRankByPoints, RANK_TIERS } from '../../utils/ranks';
+import { getRankByPoints, calcRankProgress, RANK_TIERS } from '../../utils/ranks';
 import { ChibiAvatar } from '../ChibiAvatar';
-import { StudentCard, CardDensity } from '../StudentCard';
 import { storage } from '../../utils/storage';
 import { HeroMainBanner } from '../HeroMainBanner';
 import { TopScholarsStrip } from '../TopScholarsStrip';
@@ -67,58 +69,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedRankTier, setSelectedRankTier] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'points-desc' | 'points-asc' | 'name'>('points-desc');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [density, setDensity] = useState<CardDensity>(
-    () => (localStorage.getItem('tndv_card_density') as CardDensity) || 'comfortable'
-  );
-  const changeDensity = (d: CardDensity) => {
-    setDensity(d);
-    localStorage.setItem('tndv_card_density', d);
-  };
-  const [moreOpen, setMoreOpen] = useState(false);
 
   // Multi-select state
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [isEditMode, setIsEditMode] = useState<boolean>(config.isEditMode || false);
-
-  // Thứ hạng toàn lớp (để gắn huy chương top 3)
-  const classRankIndex = useMemo(() => {
-    const m = new Map<string, number>();
-    [...students]
-      .filter(s => s.points > 0)
-      .sort((a, b) => b.points - a.points)
-      .forEach((s, i) => m.set(s.id, i));
-    return m;
-  }, [students]);
-
-  // Hiệu ứng "+N" bay lên trên thẻ khi điểm thay đổi
-  const prevPointsRef = useRef<Map<string, number> | null>(null);
-  const [floats, setFloats] = useState<Record<string, { value: number; key: number }>>({});
-  useEffect(() => {
-    const prev = prevPointsRef.current;
-    const next = new Map(students.map(s => [s.id, s.points]));
-    prevPointsRef.current = next;
-    if (!prev) return;
-    const changed: Record<string, { value: number; key: number }> = {};
-    students.forEach(s => {
-      const before = prev.get(s.id);
-      if (before !== undefined && before !== s.points) {
-        changed[s.id] = { value: s.points - before, key: Date.now() + Math.random() };
-      }
-    });
-    if (Object.keys(changed).length === 0) return;
-    setFloats(f => ({ ...f, ...changed }));
-    const t = setTimeout(() => {
-      setFloats(f => {
-        const copy = { ...f };
-        Object.keys(changed).forEach(id => {
-          if (copy[id]?.key === changed[id].key) delete copy[id];
-        });
-        return copy;
-      });
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [students]);
 
   // Filter & sort
   const filteredStudents = students

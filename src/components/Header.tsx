@@ -1,16 +1,18 @@
 import React from 'react';
-import {
-  Menu,
-  Volume2,
-  VolumeX,
-  Tv,
-  Sparkles,
-  Trophy,
-  RotateCw,
-  PanelLeftOpen,
-  Minimize2
+import { 
+  Menu, 
+  Volume2, 
+  VolumeX, 
+  Tv, 
+  Sparkles, 
+  Trophy, 
+  Dice5,
+  GraduationCap,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { ClassConfig, Student } from '../types';
+import { soundEngine } from '../utils/soundEngine';
 
 interface HeaderProps {
   config: ClassConfig;
@@ -25,15 +27,13 @@ interface HeaderProps {
   onOpenScoreModal: () => void;
   isSidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
-  title?: string;
 }
-
-const iconBtn =
-  'w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer border';
 
 export const Header: React.FC<HeaderProps> = ({
   config,
+  students,
   onToggleSound,
+  onOpenSettings,
   onToggleFullscreen,
   isFullscreen,
   onToggleMobileMenu,
@@ -41,110 +41,123 @@ export const Header: React.FC<HeaderProps> = ({
   onCallStudent,
   onOpenScoreModal,
   isSidebarCollapsed = false,
-  onToggleSidebar,
-  title
+  onToggleSidebar
 }) => {
   return (
-    <header
-      id="app-main-header"
-      className="sticky top-0 z-30 font-sans bg-primary-900/95 backdrop-blur supports-[backdrop-filter]:bg-primary-900/90 text-white border-b border-gold-500/40 shadow-[0_4px_20px_-8px_rgba(58,8,7,0.6)]"
-    >
-      <div className="w-full px-3 sm:px-5 h-14 flex items-center gap-2 sm:gap-3">
-        {/* Left: menu toggles + title */}
-        <button
-          type="button"
-          onClick={onToggleMobileMenu}
-          className={`${iconBtn} lg:hidden bg-white/5 border-white/10 text-gold-200 hover:bg-white/10`}
-          title="Mở menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header id="app-main-header" className="bg-[#5B0E0E] text-white shadow-md border-b-2 border-amber-400/80 sticky top-0 z-30 font-sans">
+      <div className="w-full px-3.5 sm:px-6 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left Menu Toggle Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              className="lg:hidden p-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 transition-colors cursor-pointer flex items-center justify-center"
+              title="Mở menu danh mục"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-        {onToggleSidebar && isSidebarCollapsed && (
-          <button
-            type="button"
-            id="btn-toggle-desktop-sidebar"
-            onClick={onToggleSidebar}
-            className={`${iconBtn} hidden lg:flex bg-white/5 border-white/10 text-gold-200 hover:bg-white/10`}
-            title="Hiện thanh menu"
-          >
-            <PanelLeftOpen className="w-5 h-5" />
-          </button>
-        )}
-
-        <div className="min-w-0 hidden sm:block">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-gold-300/80 font-bold leading-none">
-            {config.className}
+            {/* Desktop toggle sidebar button */}
+            {onToggleSidebar && (
+              <button
+                type="button"
+                id="btn-toggle-desktop-sidebar"
+                onClick={onToggleSidebar}
+                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold font-sans text-xs transition-all cursor-pointer shadow-xs active:scale-95 ${
+                  isSidebarCollapsed
+                    ? "bg-amber-400 text-amber-950 hover:bg-yellow-300 border border-yellow-300 shadow-md font-extrabold"
+                    : "border border-amber-400/40 text-amber-200 bg-amber-500/20 hover:bg-amber-500/35"
+                }`}
+                title={isSidebarCollapsed ? "Mở rộng thanh menu bên cạnh" : "Ẩn thanh menu bên cạnh"}
+              >
+                {isSidebarCollapsed ? (
+                  <>
+                    <PanelLeftOpen className="w-4 h-4 text-amber-950" />
+                    <span>Hiện Menu</span>
+                  </>
+                ) : (
+                  <>
+                    <PanelLeftClose className="w-4 h-4 text-amber-200" />
+                    <span>Ẩn Menu</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          <div className="text-sm font-black font-serif text-gold-100 truncate leading-tight mt-0.5">
-            {title || config.schoolName}
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end ml-auto">
+            {/* Chốt Tuần */}
+            <button
+              id="btn-header-weekly-summary"
+              type="button"
+              onClick={onWeeklySummary}
+              className="border border-yellow-400 text-yellow-300 bg-transparent hover:bg-yellow-400/15 rounded-xl font-bold font-sans text-xs sm:text-sm px-3.5 py-2 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Tổng kết và vinh danh tuần"
+            >
+              <Trophy className="w-4 h-4 text-yellow-400" />
+              <span>Chốt Tuần</span>
+            </button>
+
+            {/* Gọi Môn Sinh F2 */}
+            <button
+              id="btn-header-call-student"
+              type="button"
+              onClick={onCallStudent}
+              className="bg-yellow-400 hover:bg-yellow-300 text-red-900 font-bold font-sans text-xs sm:text-sm rounded-xl px-3.5 py-2 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer border border-yellow-300"
+              title="Vòng quay may mắn / Gọi ngẫu nhiên môn sinh (Phím F2)"
+            >
+              <Dice5 className="w-4 h-4 text-red-900" />
+              <span>Gọi Môn Sinh (F2)</span>
+            </button>
+
+            {/* Chấm Điểm */}
+            <button
+              id="btn-header-grade-score"
+              type="button"
+              onClick={onOpenScoreModal}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold font-sans text-xs sm:text-sm rounded-xl px-3.5 py-2 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer border border-red-500"
+              title="Khen thưởng & Ghi nhận điểm số học sinh"
+            >
+              <Sparkles className="w-4 h-4 text-white" />
+              <span>Chấm Điểm</span>
+            </button>
+
+            {/* Sound Toggle */}
+            <button
+              id="btn-toggle-sound"
+              onClick={onToggleSound}
+              className={`p-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                config.soundEnabled
+                  ? "bg-amber-500/30 text-amber-200 hover:bg-amber-500/50 border border-amber-400/40"
+                  : "bg-red-950/40 text-red-300 hover:bg-red-950/60 border border-red-500/30"
+              }`}
+              title={config.soundEnabled ? "Tắt âm thanh lớp học" : "Bật âm thanh lớp học"}
+            >
+              {config.soundEnabled ? (
+                <Volume2 className="w-4 h-4 text-amber-300" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-red-300" />
+              )}
+            </button>
+
+            {/* Fullscreen TV Mode */}
+            <button
+              id="btn-toggle-fullscreen"
+              onClick={onToggleFullscreen}
+              className={`p-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                isFullscreen 
+                  ? "bg-amber-400 text-amber-950 border border-yellow-300 font-bold" 
+                  : "bg-amber-500/30 text-amber-200 hover:bg-amber-500/50 border border-amber-400/40"
+              }`}
+              title="Trình chiếu toàn màn hình TV / Máy chiếu"
+            >
+              <Tv className="w-4 h-4" />
+              <span className="hidden md:inline font-bold">Trình Chiếu TV</span>
+            </button>
           </div>
-        </div>
-
-        {/* Right actions */}
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <button
-            id="btn-header-weekly-summary"
-            type="button"
-            onClick={onWeeklySummary}
-            className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold border border-gold-400/50 text-gold-200 hover:bg-gold-400/10 transition-all cursor-pointer"
-            title="Tổng kết và vinh danh tuần"
-          >
-            <Trophy className="w-4 h-4" />
-            <span>Chốt Tuần</span>
-          </button>
-
-          <button
-            id="btn-header-call-student"
-            type="button"
-            onClick={onCallStudent}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-black bg-gradient-to-b from-gold-300 to-gold-500 hover:from-gold-200 hover:to-gold-400 text-primary-950 shadow-sm active:scale-95 transition-all cursor-pointer"
-            title="Vòng quay may mắn gọi môn sinh (F2)"
-          >
-            <RotateCw className="w-4 h-4" />
-            <span className="hidden sm:inline">Gọi Môn Sinh</span>
-            <kbd className="hidden lg:inline text-[10px] font-bold px-1 rounded bg-primary-950/15">F2</kbd>
-          </button>
-
-          <button
-            id="btn-header-grade-score"
-            type="button"
-            onClick={onOpenScoreModal}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-black bg-primary-600 hover:bg-primary-500 text-white border border-primary-400/40 shadow-sm active:scale-95 transition-all cursor-pointer"
-            title="Khen thưởng & nhắc nhở học sinh"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Chấm Điểm</span>
-          </button>
-
-          <div className="w-px h-6 bg-white/15 mx-0.5 hidden sm:block" />
-
-          <button
-            id="btn-toggle-sound"
-            onClick={onToggleSound}
-            className={`${iconBtn} ${
-              config.soundEnabled
-                ? 'bg-white/5 border-white/10 text-gold-200 hover:bg-white/10'
-                : 'bg-primary-950/50 border-primary-500/30 text-primary-300 hover:bg-primary-950/70'
-            }`}
-            title={config.soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
-          >
-            {config.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-
-          <button
-            id="btn-toggle-fullscreen"
-            onClick={onToggleFullscreen}
-            className={`inline-flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-              isFullscreen
-                ? 'bg-gold-400 text-primary-950 border-gold-300'
-                : 'bg-white/5 border-white/10 text-gold-200 hover:bg-white/10'
-            }`}
-            title={isFullscreen ? 'Thoát chế độ trình chiếu' : 'Trình chiếu lên TV / máy chiếu (chữ to, toàn màn hình)'}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Tv className="w-4 h-4" />}
-            <span className="hidden md:inline">{isFullscreen ? 'Thoát trình chiếu' : 'Trình chiếu'}</span>
-          </button>
         </div>
       </div>
     </header>
