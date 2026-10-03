@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:single": "tsc && vite build --mode singlefile && node scripts/inline-assets.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,8 +25,10 @@
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.2.2",
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-plugin-singlefile": "^2.3.3"
   }
 }

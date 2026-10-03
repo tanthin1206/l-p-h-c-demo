@@ -13,6 +13,11 @@ export const getAssetUrl = (path: string): string => {
   } else if (cleanPath.startsWith('/')) {
     cleanPath = cleanPath.slice(1);
   }
+  // Single-file offline build: images are embedded as base64 in window.__INLINE_ASSETS__
+  const inlined = (typeof window !== 'undefined' ? (window as any).__INLINE_ASSETS__ : null);
+  if (inlined && inlined[cleanPath]) {
+    return inlined[cleanPath];
+  }
   const base = (import.meta as any).env?.BASE_URL || './';
   const normalizedBase = base.endsWith('/') ? base : `${base}/`;
   return `${normalizedBase}${cleanPath}`;
